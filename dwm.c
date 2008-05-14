@@ -1067,6 +1067,11 @@ manage(Window w, XWindowAttributes *wa)
 	updatewindowtype(c);
 	updatesizehints(c);
 	updatewmhints(c);
+	c->oldx = c->x;
+	c->oldy = c->y;
+	c->oldw = c->w;
+	c->oldh = c->h;
+	c->oldbw = c->bw;
 	XSelectInput(dpy, w, EnterWindowMask|FocusChangeMask|PropertyChangeMask|StructureNotifyMask);
 	grabbuttons(c, 0);
 	if (!c->isfloating)
@@ -1286,11 +1291,17 @@ resizeclient(Client *c, int x, int y, int w, int h)
 {
 	XWindowChanges wc;
 
-	c->oldx = c->x; c->x = wc.x = x;
-	c->oldy = c->y; c->y = wc.y = y;
-	c->oldw = c->w; c->w = wc.width = w;
-	c->oldh = c->h; c->h = wc.height = h;
+	c->x = wc.x = x;
+	c->y = wc.y = y;
+	c->w = wc.width = w;
+	c->h = wc.height = h;
 	wc.border_width = c->bw;
+	if ((!selmon->lt[selmon->sellt]->arrange || c->isfloating) && !c->isfullscreen) {
+		c->oldx = x;
+		c->oldy = y;
+		c->oldw = w;
+		c->oldh = h;
+	}
 	XConfigureWindow(dpy, c->win, CWX|CWY|CWWidth|CWHeight|CWBorderWidth, &wc);
 	configure(c);
 	XSync(dpy, False);
@@ -1633,8 +1644,12 @@ showhide(Client *c)
 	if (ISVISIBLE(c)) {
 		/* show clients top down */
 		XMoveWindow(dpy, c->win, c->x, c->y);
-		if ((!c->mon->lt[c->mon->sellt]->arrange || c->isfloating) && !c->isfullscreen)
-			resize(c, c->x, c->y, c->w, c->h, 0);
+		if ((!c->mon->lt[c->mon->sellt]->arrange || c->isfloating) && !c->isfullscreen) {
+			if (c->isfloating)
+				resize(c, c->x, c->y, c->w, c->h, 0);
+			else
+				resize(c, c->oldx, c->oldy, c->oldw, c->oldh, 0);
+		}
 		showhide(c->snext);
 	} else {
 		/* hide clients bottom up */
@@ -1729,8 +1744,14 @@ togglefloating(const Arg *arg)
 		return;
 	selmon->sel->isfloating = !selmon->sel->isfloating || selmon->sel->isfixed;
 	if (selmon->sel->isfloating)
-		resize(selmon->sel, selmon->sel->x, selmon->sel->y,
-			selmon->sel->w, selmon->sel->h, 0);
+		resize(selmon->sel, selmon->sel->oldx, selmon->sel->oldy,
+		       selmon->sel->oldw, selmon->sel->oldh, 0);
+	if (!selmon->sel->isfloating) {
+		selmon->sel->oldx = selmon->sel->x;
+		selmon->sel->oldy = selmon->sel->y;
+		selmon->sel->oldw = selmon->sel->w;
+		selmon->sel->oldh = selmon->sel->h;
+	}
 	arrange(selmon);
 }
 
