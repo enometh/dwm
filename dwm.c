@@ -65,6 +65,7 @@ enum { NetSupported, NetWMName, NetWMState, NetWMCheck,
        NetWMWindowOpacity,
        NetWMWindowTypeDialog, NetClientList, NetLast }; /* EWMH atoms */
 enum { WMProtocols, WMDelete, WMState, WMTakeFocus, WMLast }; /* default atoms */
+enum { DWMTags, DWMLast };                              /* DWM atoms */
 enum { ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle,
        ClkClientWin, ClkRootWin, ClkLast }; /* clicks */
 
@@ -206,6 +207,7 @@ static void setfocus(Client *c);
 static void setfullscreen(Client *c, int fullscreen);
 static void setlayout(const Arg *arg);
 static void setmfact(const Arg *arg);
+static void settagsprop(Window w, unsigned int tags);
 static void setup(void);
 static void seturgent(Client *c, int urg);
 static void showhide(Client *c);
@@ -263,7 +265,7 @@ static void (*handler[LASTEvent]) (XEvent *) = {
 	[PropertyNotify] = propertynotify,
 	[UnmapNotify] = unmapnotify
 };
-static Atom wmatom[WMLast], netatom[NetLast];
+static Atom wmatom[WMLast], netatom[NetLast], dwmatom[DWMLast];
 static int running = 1;
 static Cur *cursor[CurLast];
 static Clr **scheme;
@@ -1120,6 +1122,21 @@ manage(Window w, XWindowAttributes *wa)
 	c->oldbw = c->bw;
 	XSelectInput(dpy, w, EnterWindowMask|FocusChangeMask|PropertyChangeMask|StructureNotifyMask);
 	grabbuttons(c, 0);
+	updatetitle(c);
+	XTextProperty prop;
+	applyrules(c);
+	if (XGetTextProperty(dpy, c->win, &prop, dwmatom[DWMTags])) {
+		c->tags = *(unsigned int *)prop.value;
+		XFree(prop.value);
+	} else {
+		if (XGetTransientForHint(dpy, w, &trans))
+			t = wintoclient(trans);
+		if (t)
+			c->tags = t->tags;
+	}
+	if (!c->tags)
+		c->tags = selmon->tagset[selmon->seltags];
+	settagsprop(c->win, c->tags);
 	if (!c->isfloating)
 		c->isfloating = c->oldstate = trans != None || c->isfixed;
 	if (c->isfloating)
@@ -1593,6 +1610,18 @@ setmfact(const Arg *arg)
 }
 
 void
+settagsprop(Window w, unsigned int tags)
+{
+	unsigned int v[1] = { tags };
+	XTextProperty p;
+	p.value = (unsigned char *)v;
+	p.encoding = XA_CARDINAL;
+	p.format = 32;
+	p.nitems = LENGTH(v);
+	XSetTextProperty(dpy, w, &p, dwmatom[DWMTags]);
+}
+
+void
 setup(void)
 {
 	int i;
@@ -1636,6 +1665,7 @@ setup(void)
 	netatom[NetWMWindowType] = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE", False);
 	netatom[NetWMWindowTypeDialog] = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE_DIALOG", False);
 	netatom[NetClientList] = XInternAtom(dpy, "_NET_CLIENT_LIST", False);
+	dwmatom[DWMTags] = XInternAtom(dpy, "DWM_TAGS", False);
 	/* init cursors */
 	cursor[CurNormal] = drw_cur_create(drw, XC_left_ptr);
 	cursor[CurResize] = drw_cur_create(drw, XC_sizing);
@@ -1732,6 +1762,7 @@ tag(const Arg *arg)
 {
 	if (selmon->sel && arg->ui & TAGMASK) {
 		selmon->sel->tags = arg->ui & TAGMASK;
+		settagsprop(selmon->sel->win, selmon->sel->tags);
 		focus(NULL);
 		arrange(selmon);
 	}
@@ -1812,6 +1843,7 @@ toggletag(const Arg *arg)
 	newtags = selmon->sel->tags ^ (arg->ui & TAGMASK);
 	if (newtags) {
 		selmon->sel->tags = newtags;
+		settagsprop(selmon->sel->win, selmon->sel->tags);
 		focus(NULL);
 		arrange(selmon);
 	}
