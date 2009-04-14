@@ -139,5 +139,6 @@ static const Button buttons[] = {
 	{ ClkTagBar,            MODKEY,         Button3,        toggletag,      {0} },
 
 	{ ClkClientWin,         0,              Button1,        myfocus,        {0} }, // madhu 090403
+	{ ClkWinTitle,          0,              Button1,        focusclienttaskbar, {0} }, // taskbar_click
 };
 
