@@ -173,6 +173,7 @@ static void enternotify(XEvent *e);
 static void expose(XEvent *e);
 static void window_opacity_set(Client *c, double opacity);
 static void focus(Client *c);
+static void focusclienttaskbar(const Arg *arg);
 static void focusin(XEvent *e);
 static void focusmon(const Arg *arg);
 static void focusstack(const Arg *arg);
@@ -250,6 +251,7 @@ static int screen;
 static int sw, sh;           /* X display screen geometry width, height */
 static int bh, blw = 0;      /* bar geometry */
 static int lrpad;            /* sum of left and right padding for text */
+static int ncc;		     /* number of client clicked */
 static int (*xerrorxlib)(Display *, XErrorEvent *);
 static unsigned int numlockmask = 0;
 static void (*handler[LASTEvent]) (XEvent *) = {
@@ -454,7 +456,8 @@ attachstack(Client *c)
 void
 buttonpress(XEvent *e)
 {
-	unsigned int i, x, click;
+	unsigned int i, x, click, n = 0;
+	float wpc; //width per client
 	Arg arg = {0};
 	Client *c;
 	Monitor *m;
@@ -479,9 +482,20 @@ buttonpress(XEvent *e)
 			click = ClkLtSymbol;
 		else if (ev->x > selmon->ww - (int)TEXTW(stext))
 			click = ClkStatusText;
-		else
+		else {
 			click = ClkWinTitle;
-	} else if ((c = wintoclient(ev->window))) {
+			for (c = selmon->clients; c; c = c->next)
+				if (ISVISIBLE(c))
+					n++;
+			if (n == 0)
+				ncc = 0;
+			else {
+				wpc = (selmon->wx + selmon->ww - TEXTW(stext) - x - blw) / n;
+				ncc = (ev->x - x - blw) / wpc;
+			}
+		}
+	}
+	else if ((c = wintoclient(ev->window))) {
 		focus(c);
 		click = ClkClientWin;
 	}
@@ -758,10 +772,10 @@ dirtomon(int dir)
 void
 drawbar(Monitor *m)
 {
-	int x, w, tw = 0;
+	int x, w, tw = 0, stx;
 	int boxs = drw->fonts->h / 9;
 	int boxw = drw->fonts->h / 6 + 2;
-	unsigned int i, occ = 0, urg = 0;
+	unsigned int i, occ = 0, urg = 0, n = 0;
 	Client *c;
 
 	/* draw status first so it can be overdrawn by tags later */
@@ -772,6 +786,8 @@ drawbar(Monitor *m)
 	}
 
 	for (c = m->clients; c; c = c->next) {
+		if (ISVISIBLE(c))
+			n++;
 		occ |= c->tags;
 		if (c->isurgent)
 			urg |= c->tags;
@@ -791,12 +807,19 @@ drawbar(Monitor *m)
 	drw_setscheme(drw, scheme[SchemeNorm]);
 	x = drw_text(drw, x, 0, w, bh, lrpad / 2, m->ltsymbol, 0);
 
-	if ((w = m->ww - tw - x) > bh) {
+	if ((w = (n > 0) ? (m->ww - tw - x)/n : (m->ww - tw - x)) > bh) {
+		stx = m->ww - tw;
 		if (m->sel) {
-			drw_setscheme(drw, scheme[m == selmon ? SchemeSel : SchemeNorm]);
-			drw_text(drw, x, 0, w, bh, lrpad / 2, m->sel->name, 0);
-			if (m->sel->isfloating)
-				drw_rect(drw, x + boxs, boxs, boxw, boxw, m->sel->isfixed, 0);
+			for (c = m->clients, i = 1; c; c = c->next) {
+				if (ISVISIBLE(c)) {
+					drw_setscheme(drw, scheme[c == selmon->sel ? SchemeSel : SchemeNorm]);
+					drw_text(drw, x, 0, w, bh, lrpad / 2, c->name, 0);
+					if (c->isfloating)
+						drw_rect(drw, x + boxs, boxs, boxw, boxw, c->isfixed, 0);
+					x += w;
+					w = ++i < n ? w : stx - x;
+				}
+			}
 		} else {
 			drw_setscheme(drw, scheme[SchemeNorm]);
 			drw_rect(drw, x, 0, w, bh, 1, 1);
@@ -882,6 +905,20 @@ focus(Client *c)
 	selmon->sel = c;
 	drawbars();
 	if (c) window_opacity_set(c, c->opacity);
+}
+
+void
+focusclienttaskbar(const Arg *arg)
+{
+    Client *c;
+
+    for (c = selmon->clients; c; c = c->next)
+		if (ISVISIBLE(c) && --ncc < 0) {
+		focus(c);
+		XRaiseWindow(dpy,c->win);
+		restack(selmon);
+			break;
+		}
 }
 
 /* there are some broken focus acquiring clients needing extra handling */
