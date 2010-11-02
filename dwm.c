@@ -1024,8 +1024,9 @@ manage(Window w, XWindowAttributes *wa)
 	c = ecalloc(1, sizeof(Client));
 	c->win = w;
 	/* geometry */
-	c->x = c->oldx = wa->x;
-	c->y = c->oldy = wa->y;
+	c->mon = selmon;	// XXX FIXME ;madhu 160725
+	c->x = c->oldx = (wa->x % sw) + c->mon->wx;
+	c->y = c->oldy = wa->y + ((c->mon->topbar == True && wa->y !=0 ) ? 0 : c->mon->wy);
 	c->w = c->oldw = wa->width;
 	c->h = c->oldh = wa->height;
 	c->oldbw = wa->border_width;
@@ -1624,7 +1625,7 @@ showhide(Client *c)
 	} else {
 		/* hide clients bottom up */
 		showhide(c->snext);
-		XMoveWindow(dpy, c->win, WIDTH(c) * -2, c->y);
+		XMoveWindow(dpy, c->win, c->x + 2 * sw, c->y);
 	}
 }
 
