@@ -17,9 +17,9 @@ options:
 .c.o:
 	${CC} -c ${CFLAGS} $<
 
-${OBJ}: config.h config.mk rules.fragment
+${OBJ}: config.h config.mk rules.fragment patch-madhu.c
 
-config.h:
+config.h: config.def.h
 	cp config.def.h $@
 
 dwm: ${OBJ}
