@@ -143,3 +143,30 @@ windowlist(const Arg *arg) {
 	pop(c);
 	return;
 }
+
+
+static void toggleopacity(const Arg *arg) {
+	if(!selmon->sel)
+		return;
+	fprintf(stderr,"%s->opacity=%g",selmon->sel->name,selmon->sel->opacity);
+	if (arg->f == 0) {	// toggle-opacity
+		if (selmon->sel->opacity <= -1)
+			selmon->sel->opacity = shade;
+		else if ((-1 < selmon->sel->opacity) &&
+		    (selmon->sel->opacity < 0))
+			selmon->sel->opacity += 1;
+		else if ((0  <= selmon->sel->opacity) &&
+			 (selmon->sel->opacity < 1))
+			selmon->sel->opacity -= 1;
+		else
+			selmon->sel->opacity = -1;
+	} else {
+		selmon->sel->opacity += arg->f;
+		if (selmon->sel->opacity < 0)
+			selmon->sel->opacity = 1;
+		else if (selmon->sel->opacity > 1)
+			selmon->sel->opacity = 0.1;
+	}
+	fprintf(stderr,"==>%g\n",selmon->sel->opacity);
+	window_opacity_set(selmon->sel, selmon->sel->opacity);
+}
