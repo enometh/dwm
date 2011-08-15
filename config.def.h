@@ -108,6 +108,11 @@ static Key keys[] = {
 	TAGKEYS(                        XK_9,                      8)
 	{ MODKEY|ShiftMask|ControlMask, XK_q,      quit,           {0} },
 
+	//toggleopacity
+	{ MODKEY_ALT,                   XK_s,      toggleopacity,  {0}, },
+	{ MODKEY_ALT,                   XK_j,      toggleopacity,  {.f = +0.1}, },
+	{ MODKEY_ALT,                   XK_k,      toggleopacity,  {.f = -0.1}, },
+
 	{ MODKEY|ShiftMask,             XK_e,      cycle_layouts,  {0}, }, // madhu 101213
 	{ MODKEY|ShiftMask,		XK_q,	   startwm,	   {.v = "exec dwm < /dev/null" } }, // madhu 070530
 	{ MODKEY|ShiftMask,             XK_r,	   toggle_resizehints, {0}}, // madhu 080917
