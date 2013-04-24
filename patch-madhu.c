@@ -170,3 +170,8 @@ static void toggleopacity(const Arg *arg) {
 	fprintf(stderr,"==>%g\n",selmon->sel->opacity);
 	window_opacity_set(selmon->sel, selmon->sel->opacity);
 }
+
+static void toggle_systray () {
+	showsystray = (showsystray == False) ? True : False;
+	updatestatus();
+}
