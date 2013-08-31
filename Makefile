@@ -17,7 +17,7 @@ options:
 .c.o:
 	${CC} -c ${CFLAGS} $<
 
-${OBJ}: config.h config.mk
+${OBJ}: config.h config.mk rules.fragment
 
 config.h:
 	cp config.def.h $@
@@ -49,3 +49,6 @@ uninstall:
 		${DESTDIR}${MANPREFIX}/man1/dwm.1
 
 .PHONY: all options clean dist install uninstall
+
+rules.fragment:
+	touch rules.fragment
