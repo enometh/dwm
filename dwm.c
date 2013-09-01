@@ -680,6 +680,13 @@ configurerequest(XEvent *e)
 				c->x = m->mx + (m->mw / 2 - WIDTH(c) / 2); /* center in x direction */
 			if ((c->y + c->h) > m->my + m->mh && c->isfloating)
 				c->y = m->my + (m->mh / 2 - HEIGHT(c) / 2); /* center in y direction */
+			if ((ev->value_mask & CWStackMode) && ! (ev->value_mask & CWSibling)) {
+				XWindowChanges changes;
+				changes.sibling = ev->above;
+				changes.stack_mode = ev->detail;
+				XConfigureWindow(dpy,c->win,CWStackMode,
+						 &changes);
+			}
 			if ((ev->value_mask & (CWX|CWY)) && !(ev->value_mask & (CWWidth|CWHeight)))
 				configure(c);
 			if (ISVISIBLE(c))
