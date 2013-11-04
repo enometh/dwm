@@ -410,6 +410,24 @@ attach(Client *c)
 void
 attachstack(Client *c)
 {
+	{ //madhu 131023 - TODO FIGURE OUT HOW TO PRINT A STACKBACKTRACE HERE
+		Client **tc;
+		int count = 0, maxcount = 1000;
+		for (tc=&c->mon->stack; *tc
+			    && *tc != c
+			    && ((count == 0)?1:(*tc != c->mon->stack))
+			    && (count <= maxcount);
+		    tc=&(*tc)->snext,count++);
+		if (count > maxcount || (*tc && *tc == c->mon->stack)) {
+			fprintf(stderr, "FIXME: attachstack infinite loop\n");
+			*tc = NULL;
+			return;
+		}
+		if (*tc == c) {
+			fprintf(stderr, "FIXME: attachstack corruption dup\n");
+			return;
+		}
+	}
 	c->snext = c->mon->stack;
 	c->mon->stack = c;
 }
@@ -672,7 +690,12 @@ detachstack(Client *c)
 
 	if (c == c->mon->sel) {
 		for (t = c->mon->stack; t && !ISVISIBLE(t); t = t->snext);
-		c->mon->sel = t;
+		c->mon->sel = (t == c) ? NULL : t;
+		{ //madhu 131023 - TODO FIGURE OUT HOW TO PRINT A STACKBACKTRACE HERE
+			if (t == c)
+				fprintf(stderr,"FIXME: cornercase: detachstack(%p)=%lu %s fails\n",
+					(void *)c, c->win,c->name);
+		}
 	}
 }
 
