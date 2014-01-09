@@ -70,6 +70,18 @@ static const Layout layouts[] = {
 	{ MOD, XK_h, setfacts, {.v = (float[]){ INC(G * -0.1), INC(M * -0.1), INC(S * -0.1) } } }, \
 	{ MOD, XK_l, setfacts, {.v = (float[]){ INC(G * +0.1), INC(M * +0.1), INC(S * +0.1) } } },
 
+#define STACKKEYS(MOD,ACTION)				   \
+	{ MOD, XK_j,     ACTION##stack, {.i = INC(+1) } }, \
+	{ MOD, XK_k,     ACTION##stack, {.i = INC(-1) } }, \
+	{ MOD, XK_grave, ACTION##stack, {.i = PREVSEL } }, \
+	{ MOD, XK_F1,    ACTION##stack, {.i = 0 } }, \
+	{ MOD, XK_F2,    ACTION##stack, {.i = 1 } }, \
+	{ MOD, XK_F3,    ACTION##stack, {.i = 2 } }, \
+	{ MOD, XK_F4,    ACTION##stack, {.i = 3 } }, \
+	{ MOD, XK_F5,    ACTION##stack, {.i = 4 } }, \
+	{ MOD, XK_F6,    ACTION##stack, {.i = 5 } }, \
+	{ MOD | ShiftMask, XK_F1,     ACTION##stack, {.i = -1 } },
+
 /* helper for spawning shell commands in the pre dwm-5.0 fashion */
 #define SHCMD(cmd) { .v = (const char*[]){ "/bin/sh", "-c", cmd, NULL } }
 
@@ -84,8 +96,8 @@ static const Key keys[] = {
 	{ MODKEY|ShiftMask,             XK_p,      spawn,          {.v = dmenucmd } },
 	{ MODKEY|ShiftMask,             XK_Return, spawn,          {.v = termcmd } },
 	{ MODKEY|ShiftMask,             XK_b,      togglebar,      {0} },
-	{ MODKEY,                       XK_j,      focusstack,     {.i = +1 } },
-	{ MODKEY,                       XK_k,      focusstack,     {.i = -1 } },
+//stack	{ MODKEY,                       XK_j,      focusstack,     {.i = +1 } },
+//stack	{ MODKEY,                       XK_k,      focusstack,     {.i = -1 } },
 	{ MODKEY|ShiftMask,             XK_i,      incnmaster,     {.i = +1 } },
 	{ MODKEY|ShiftMask,             XK_d,      incnmaster,     {.i = -1 } },
 //xtile	{ MODKEY|ShiftMask,             XK_h,      setmfact,       {.f = -0.05} },
@@ -127,6 +139,10 @@ static const Key keys[] = {
 	TILEKEYS(MODKEY_ALT|ShiftMask|ControlMask,                 1, 1, 1)
 	{ MODKEY_ALT|ShiftMask,         XK_t,      setdirs,        {.v = (int[]){ DirHor, DirVer, DirVer } } },
 	{ MODKEY_ALT|ControlMask,       XK_t,      setdirs,        {.v = (int[]){ DirVer, DirHor, DirHor } } },
+
+	//stacker
+	STACKKEYS(MODKEY,                          focus)
+	STACKKEYS(MODKEY|ShiftMask,                push)
 
 	{ MODKEY|ShiftMask,             XK_e,      cycle_layouts,  {0}, }, // madhu 101213
 	{ MODKEY|ShiftMask,		XK_q,	   startwm,	   {.v = "exec dwm < /dev/null" } }, // madhu 070530
