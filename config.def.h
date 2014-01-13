@@ -40,7 +40,9 @@ static const Rule rules[] = {
 };
 
 /* layout(s) */
-static const float mfact     = 0.625; /* factor of master area size [0.05..0.95] */
+static const int dirs[3]      = { DirHor, DirVer, DirVer }; /* tiling dirs */
+static const float facts[3]   = { 1.1,    1.1,    1.1 };    /* tiling facts */
+
 static const int nmaster     = 1;    /* number of clients in master area */
 static       int resizehints = 1;    /* 1 means respect size hints in tiled resizals */
 static const int lockfullscreen = 1; /* 1 will force focus on the fullscreen window */
@@ -64,6 +66,11 @@ static const Layout layouts[] = {
 	{ MODKEY|ShiftMask,             KEY,      tag,            {.ui = 1 << TAG} }, \
 	{ MODKEY|ControlMask|ShiftMask, KEY,      toggletag,      {.ui = 1 << TAG} },
 
+#define TILEKEYS(MOD,G,M,S)						\
+	{ MOD, XK_r, setdirs,  {.v = (int[])  { INC(G * +1),   INC(M * +1),   INC(S * +1) } } }, \
+	{ MOD, XK_h, setfacts, {.v = (float[]){ INC(G * -0.1), INC(M * -0.1), INC(S * -0.1) } } }, \
+	{ MOD, XK_l, setfacts, {.v = (float[]){ INC(G * +0.1), INC(M * +0.1), INC(S * +0.1) } } },
+
 /* helper for spawning shell commands in the pre dwm-5.0 fashion */
 #define SHCMD(cmd) { .v = (const char*[]){ "/bin/sh", "-c", cmd, NULL } }
 
@@ -82,8 +89,8 @@ static const Key keys[] = {
 	{ MODKEY,                       XK_k,      focusstack,     {.i = -1 } },
 	{ MODKEY|ShiftMask,             XK_i,      incnmaster,     {.i = +1 } },
 	{ MODKEY|ShiftMask,             XK_d,      incnmaster,     {.i = -1 } },
-	{ MODKEY|ShiftMask,             XK_h,      setmfact,       {.f = -0.05} },
-	{ MODKEY|ShiftMask,             XK_l,      setmfact,       {.f = +0.05} },
+//xtile	{ MODKEY|ShiftMask,             XK_h,      setmfact,       {.f = -0.05} },
+//xtile	{ MODKEY|ShiftMask,             XK_l,      setmfact,       {.f = +0.05} },
 	{ MODKEY,                       XK_Return, zoom,           {0} },
 	{ MODKEY,                       XK_Tab,    view,           {0} },
 	{ MODKEY|ShiftMask,             XK_c,      killclient,     {0} },
@@ -113,6 +120,14 @@ static const Key keys[] = {
 	{ MODKEY_ALT,                   XK_l,      toggleopacity,  {0}, },
 	{ MODKEY_ALT,                   XK_j,      toggleopacity,  {.f = +0.1}, },
 	{ MODKEY_ALT,                   XK_k,      toggleopacity,  {.f = -0.1}, },
+
+	//xtile
+	TILEKEYS(MODKEY_ALT,                                       1, 0, 0)
+	TILEKEYS(MODKEY_ALT|ShiftMask,                             0, 1, 0)
+	TILEKEYS(MODKEY_ALT|ControlMask,                           0, 0, 1)
+	TILEKEYS(MODKEY_ALT|ShiftMask|ControlMask,                 1, 1, 1)
+	{ MODKEY_ALT|ShiftMask,         XK_t,      setdirs,        {.v = (int[]){ DirHor, DirVer, DirVer } } },
+	{ MODKEY_ALT|ControlMask,       XK_t,      setdirs,        {.v = (int[]){ DirVer, DirHor, DirHor } } },
 
 	{ MODKEY|ShiftMask,             XK_e,      cycle_layouts,  {0}, }, // madhu 101213
 	{ MODKEY|ShiftMask,		XK_q,	   startwm,	   {.v = "exec dwm < /dev/null" } }, // madhu 070530
