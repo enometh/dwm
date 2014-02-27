@@ -1913,13 +1913,22 @@ tile(Monitor *m)
 		sa->x = 0, sa->y = ga->dir == DirVer ? ms : 0, sa->fx = m->ww, sa->fy = sa->y + ss;
 	/* tile clients */
 	for (c = nexttiled(m->clients), i = 0; i < n; c = nexttiled(c->next), i++) {
-		a = ma->n > 0 ? ma : sa;
-		f = i == 0 || ma->n == 0 ? a->fact : 1, f /= --a->n + f;
-		w = (a->dir == DirVer ? 1 : f) * (a->fx - a->x);
-		h = (a->dir == DirHor ? 1 : f) * (a->fy - a->y);
+		if (i == 0 || i == ma->n) {
+			a = (i == 0) ? ma : sa;
+			f = (a->n > 1) ? a->fact / (a->fact + a->n - 1) : 1;
+			w = (a->dir == DirVer ? 1 : f) * (a->fx - a->x);
+			h = (a->dir == DirHor ? 1 : f) * (a->fy - a->y);
+		} else if ((i + 1) == ma->n || (i + 1) == n) {
+			w = (a->fx - a->x);
+			h = (a->fy - a->y);
+		} else if ((i - 1) == 0 || (i - 1) == ma->n) {
+			f = (a->n > 1) ? 1.0 / (a->n - 1) : 1;
+			w = (a->dir == DirVer ? 1 : f) * (a->fx - a->x);
+			h = (a->dir == DirHor ? 1 : f) * (a->fy - a->y);
+		}
 		resize(c, m->wx + a->x, m->wy + a->y, w - 2 * c->bw, h - 2 * c->bw, False);
-		a->x += a->dir == DirHor ? w : 0;
-		a->y += a->dir == DirVer ? h : 0;
+		a->x += a->dir == DirHor ? WIDTH(c) : 0;
+		a->y += a->dir == DirVer ? HEIGHT(c) : 0;
 	}
 }
 
