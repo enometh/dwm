@@ -2198,15 +2198,17 @@ togglebar(const Arg *arg)
 void
 togglefloating(const Arg *arg)
 {
+	myfocus(arg);
+
 	if (!selmon->sel)
 		return;
-	if (selmon->sel->isfullscreen) /* no support for fullscreen windows */
-		return;
+//	if (selmon->sel->isfullscreen) /* no support for fullscreen windows */
+//		return;
 	selmon->sel->isfloating = !selmon->sel->isfloating || selmon->sel->isfixed;
 	if (selmon->sel->isfloating)
 		resize(selmon->sel, selmon->sel->oldx, selmon->sel->oldy,
 		       selmon->sel->oldw, selmon->sel->oldh, 0);
-	if (!selmon->sel->isfloating) {
+	if (!selmon->sel->isfloating && !selmon->sel->isfullscreen) {
 		selmon->sel->oldx = selmon->sel->x;
 		selmon->sel->oldy = selmon->sel->y;
 		selmon->sel->oldw = selmon->sel->w;
