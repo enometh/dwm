@@ -318,10 +318,12 @@ drw_text(Drw *drw, int x, int y, unsigned int w, unsigned int h, unsigned int lp
 
 			if (len) {
 				memcpy(buf, utf8str, len);
+				if (len < utf8strlen) {
+					buf[len++] = '\342';
+					buf[len++] = '\200';
+					buf[len++] = '\246';
+				}
 				buf[len] = '\0';
-				if (len < utf8strlen)
-					for (i = len; i && i > len - 3; buf[--i] = '.')
-						; /* NOP */
 
 				if (render) {
 					ty = y + (h - usedfont->h) / 2 + usedfont->xfont->ascent;
