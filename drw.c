@@ -262,6 +262,7 @@ drw_text(Drw *drw, int x, int y, unsigned int w, unsigned int h, unsigned int lp
 	/* keep track of a couple codepoints for which we have no match. */
 	static unsigned int nomatches[128], ellipsis_width, invalid_width;
 	static const char invalid[] = "�";
+	static char ebuf[3] = { '\342', '\200', '\246' };
 
 	if (!drw || (render && (!drw->scheme || !w)) || !text || !drw->fonts)
 		return 0;
@@ -282,7 +283,7 @@ drw_text(Drw *drw, int x, int y, unsigned int w, unsigned int h, unsigned int lp
 
 	usedfont = drw->fonts;
 	if (!ellipsis_width && render)
-		ellipsis_width = drw_fontset_getwidth(drw, "...");
+		ellipsis_width = drw_fontset_getwidth(drw, ebuf);
 	if (!invalid_width && render)
 		invalid_width = drw_fontset_getwidth(drw, invalid);
 	while (1) {
@@ -344,7 +345,7 @@ drw_text(Drw *drw, int x, int y, unsigned int w, unsigned int h, unsigned int lp
 			w -= invalid_width;
 		}
 		if (render && overflow)
-			drw_text(drw, ellipsis_x, y, ellipsis_w, h, 0, "...", invert);
+			drw_text(drw, ellipsis_x, y, ellipsis_w, h, 0, ebuf, invert);
 
 		if (!*text || overflow) {
 			break;
