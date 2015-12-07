@@ -310,15 +310,17 @@ drw_text(Drw *drw, int x, int y, unsigned int w, unsigned int h, unsigned int lp
 		if (utf8strlen) {
 			drw_font_getexts(usedfont, utf8str, utf8strlen, &ew, NULL);
 			/* shorten text if necessary */
-			for (len = MIN(utf8strlen, sizeof(buf) - 1); len && ew > w; len--)
+			for (len = MIN(utf8strlen, sizeof(buf) - 4); len && ew > w; len--)
 				drw_font_getexts(usedfont, utf8str, len, &ew, NULL);
 
 			if (len) {
 				memcpy(buf, utf8str, len);
+				if (len < utf8strlen) {
+					buf[len++] = '\342';
+					buf[len++] = '\200';
+					buf[len++] = '\246';
+				}
 				buf[len] = '\0';
-				if (len < utf8strlen)
-					for (i = len; i && i > len - 3; buf[--i] = '.')
-						; /* NOP */
 
 				if (render) {
 					ty = y + (h - usedfont->h) / 2 + usedfont->xfont->ascent;
