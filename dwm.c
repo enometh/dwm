@@ -830,7 +830,9 @@ focus(Client *c)
 		for (c = selmon->stack; c && !ISVISIBLE(c); c = c->snext);
 	if (selmon->sel && selmon->sel != c) {
 		unfocus(selmon->sel, 0);
-		window_opacity_set(selmon->sel, shade);
+		float o = selmon->sel->opacity;
+		if ((o <= 0.0) || (o > 1.0) || (o != 1.0) && (o >= shade))
+			window_opacity_set(selmon->sel, shade);
 	}
 	if (c) {
 		if (c->mon != selmon)
