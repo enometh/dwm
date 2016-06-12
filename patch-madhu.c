@@ -10,6 +10,19 @@ cycle_layouts(Arg *arg) {
 }
 
 static void
+identify_wintitle(const Arg *arg)
+{
+	Client * c;
+	if (selmon && (c = selmon->sel) && c->name[0]) {
+		int x = TEXTW("XXXXXXX");
+		int w = TEXTW(c->name);
+		drw_setscheme(drw, scheme[SchemeSel]);
+		drw_text(drw, x, 0, w, bh, lrpad / 2, c->name, 0);
+		drw_map(drw, selmon->barwin, x, 0, w, bh);
+	}
+}
+
+static void
 myfocus(const Arg *arg) {
 	Client *c;
 	if (!(c=selmon->sel)) {
