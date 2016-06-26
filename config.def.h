@@ -37,10 +37,10 @@ static const Rule rules[] = {
 	 *	WM_CLASS(STRING) = instance, class
 	 *	WM_NAME(STRING) = title
 	 */
-	/* class      instance    title       tags mask     isfloating   monitor   opacity */
+	/* class      instance    title       tags mask     isfloating   monitor   opacity, isterminal, noswallow, */
 	{ "Gimp",     NULL,       NULL,       0,            1,           -1,       -1 },
 	{ "Firefox",  NULL,       NULL,       1 << 8,       0,           -1,       -1 },
-
+	{ "st-",      NULL,       NULL,       0,            0,           -1,       -1,      1,          1 },
 #include "rules.fragment"
 };
 
@@ -159,6 +159,7 @@ static const Key keys[] = {
 	{ MODKEY|ShiftMask|ControlMask, XK_r,	   toggle_fixed,   {0}}, // madhu 120923
 	{ MODKEY|ShiftMask,             XK_w,      windowlist,     {0} }, // madhu 130402
 	{ MODKEY_ALT|ShiftMask,         XK_f,      myfocus,        {0} }, // madhu 090403
+	{ MODKEY|ShiftMask|ControlMask, XK_u,      unswallow_now,   {0} }, //;madhu 231223
 };
 
 /* button definitions */
