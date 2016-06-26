@@ -37,10 +37,10 @@ static const Rule rules[] = {
 	 *	WM_CLASS(STRING) = instance, class
 	 *	WM_NAME(STRING) = title
 	 */
-	/* class      instance    title       tags mask     isfloating   monitor   opacity */
+	/* class      instance    title       tags mask     isfloating   monitor   opacity, isterminal, noswallow, */
 	{ "Gimp",     NULL,       NULL,       0,            1,           -1,       -1 },
 	{ "Firefox",  NULL,       NULL,       1 << 8,       0,           -1,       -1 },
-
+	{ "st-",      NULL,       NULL,       0,            0,           -1,       -1,      1,          1 },
 #include "rules.fragment"
 };
 
