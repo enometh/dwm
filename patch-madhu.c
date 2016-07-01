@@ -14,9 +14,13 @@ identify_wintitle(const Arg *arg)
 	Client * c;
 	if (selmon && (c = selmon->sel) && c->name) {
 		int x = TEXTW("XXXXXXX");
-		int w = TEXTW(c->name);
+		char buf[600];
+		snprintf(buf, sizeof(buf),
+			 "%s, pid %d, %d", c->name, c->pid,
+			 getcardprop(c, netatom[NetWMPid]));
+		int w = TEXTW(buf);
 		drw_setscheme(drw, scheme[SchemeSel]);
-		drw_text(drw, x, 0, w, bh, lrpad / 2, c->name, 0);
+		drw_text(drw, x, 0, w, bh, lrpad / 2, buf, 0);
 		drw_map(drw, selmon->barwin, x, 0, w, bh);
 	}
 }
