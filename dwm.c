@@ -1389,6 +1389,19 @@ manage(Window w, XWindowAttributes *wa)
 	c->win = w;
 	/* geometry */
 	c->mon = selmon;	// XXX FIXME ;madhu 160725
+
+	// centered placement of new windows
+	if (wa->map_state != IsViewable) {
+		XSizeHints size;
+		long tmp;
+		if (!XGetWMNormalHints(dpy, w, &size, &tmp))
+			size.flags = 0;
+		if (!(size.flags & (USPosition | PPosition))) {
+			wa->x = c->mon->wx + (sw - wa->width) / 2;
+			wa->y = c->mon->wy + (sh - wa->height) / 2;
+		}
+	}
+
 	c->x = c->oldx = (wa->x % sw) + c->mon->wx;
 	c->y = c->oldy = wa->y + ((c->mon->topbar == True && wa->y !=0 ) ? 0 : c->mon->wy);
 	c->w = c->oldw = wa->width;
