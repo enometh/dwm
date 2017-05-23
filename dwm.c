@@ -1096,7 +1096,19 @@ void
 focus(Client *c)
 {
 	if (!c || !ISVISIBLE(c))
+		// first restrict search to clients which were not
+		// visible in the previous view.
+		for (c = selmon->stack; c &&
+			     ((c->tags & c->mon->tagset[1 - c->mon->seltags])
+			      ||  !ISVISIBLE(c));
+		     c = c->snext);
+
+	if (!c || !ISVISIBLE(c))
+		// search failed. broaden search to all clients in the
+		// current view
 		for (c = selmon->stack; c && !ISVISIBLE(c); c = c->snext);
+
+
 	if (selmon->sel && selmon->sel != c) {
 		unfocus(selmon->sel, 0);
 		float o = selmon->sel->opacity;
