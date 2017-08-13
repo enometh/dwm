@@ -204,7 +204,21 @@ focusurgent(const Arg *arg)
 		if(i < LENGTH(tags)) {
 			const Arg a = {.ui = 1 << i};
 			view(&a);
+			WARP(c);
 			focus(c);
 		}
+	}
+}
+
+static void
+mywarp(const Arg *arg)
+{
+	Client *c;
+	if (!(c=selmon->sel)) {
+		fprintf(stderr,"mywarp(NULL): failed\n");
+	} else {
+	  Arg a = {.i = 0};
+	  focusstack(&a);
+	  WARP(c);
 	}
 }
