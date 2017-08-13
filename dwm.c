@@ -300,6 +300,7 @@ static int xerror(Display *dpy, XErrorEvent *ee);
 static int xerrordummy(Display *dpy, XErrorEvent *ee);
 static int xerrorstart(Display *dpy, XErrorEvent *ee);
 static void xinitvisual();
+static void WARP(const Client *c);
 static void zoom(const Arg *arg);
 
 //xtile
@@ -2992,6 +2993,27 @@ swallowingclient(Window w)
 	}
 
 	return NULL;
+}
+
+static void
+WARP(const Client *c) {
+	Window dummy;
+	int x, y, di;
+	unsigned int dui;
+
+	if (!c) {
+		XWarpPointer(dpy, None, root, 0, 0, 0, 0, selmon->wx + selmon->ww / 2, selmon->wy + selmon->wh/2);
+		return;
+	}
+
+	XQueryPointer(dpy, root, &dummy, &dummy, &x, &y, &di, &di, &dui);
+
+	if ((x > c->x && y > c->y && x < c->x + c->w && y < c->y + c->h) ||
+	   (y > c->mon->by && y < c->mon->by + bh))
+		return;
+
+	// or (c->w / 2, c->h / 2)
+	XWarpPointer(dpy, None, c->win, 0, 0, 0, 0, c->w, 0);
 }
 
 Client *

@@ -169,6 +169,7 @@ static const Key keys[] = {
 	{ MODKEY_ALT|ShiftMask,         XK_f,      myfocus,        {0} }, // madhu 090403
 	{ MODKEY|ShiftMask|ControlMask, XK_u,      unswallow_now,   {0} }, //;madhu 231223
 	{ MODKEY|ShiftMask,             XK_u,      focusurgent,    {0} }, //madhu 170621
+	{ MODKEY_ALT,			XK_w,	   mywarp,	   {0} }, // madhu 170814
 };
 
 /* button definitions */
