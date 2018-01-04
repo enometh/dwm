@@ -1018,6 +1018,8 @@ drawbars(void)
 	updatesystray();
 }
 
+Time	Last_Event_Time = CurrentTime;
+
 void
 enternotify(XEvent *e)
 {
@@ -1025,6 +1027,7 @@ enternotify(XEvent *e)
 	Monitor *m;
 	XCrossingEvent *ev = &e->xcrossing;
 
+	Last_Event_Time = ev->time;
 	if ((ev->mode != NotifyNormal || ev->detail == NotifyInferior) && ev->window != root)
 		return;
 	c = wintoclient(ev->window);
@@ -1957,7 +1960,10 @@ setfocus(Client *c)
 			(unsigned char *) &(c->win), 1);
 	}
 //	sendevent(c, wmatom[WMTakeFocus]);
-	sendevent(c->win, wmatom[WMTakeFocus], NoEventMask, wmatom[WMTakeFocus], CurrentTime, 0, 0, 0);
+	sendevent(c->win, wmatom[WMTakeFocus], NoEventMask,
+		  wmatom[WMTakeFocus],
+		  (ISVISIBLE(c) ?
+		   Last_Event_Time : CurrentTime), 0, 0, 0);
 }
 
 void
@@ -2378,6 +2384,7 @@ toggleview(const Arg *arg)
 			togglebar(NULL);
 		focus(NULL);
 		arrange(selmon);
+		Last_Event_Time = CurrentTime;
 	}
 }
 
@@ -2834,6 +2841,7 @@ view(const Arg *arg)
 		togglebar(NULL);
 	focus(NULL);
 	arrange(selmon);
+	Last_Event_Time = CurrentTime;
 }
 
 pid_t
