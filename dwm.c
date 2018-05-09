@@ -436,9 +436,14 @@ applysizehints(Client *c, int *x, int *y, int *w, int *h, int interact)
 		if (*y + *h + 2 * c->bw <= m->wy)
 			*y = m->wy;
 	}
-	if (*h < bh)
+
+	/* Don't touch 1x1 windows. vbox configures a 1x1 window when
+	   mapping a window. if we resize it to bh x bh then when vbox
+	   maps an actual window, it reconfigures that window to a
+	   minimum size minw x minw */
+	if (*h < bh && *h != 1 && *w != 1)
 		*h = bh;
-	if (*w < bh)
+	if (*w < bh && *h != 1 && *w != 1)
 		*w = bh;
 	if (resizehints || c->isfloating || !c->mon->lt[c->mon->sellt]->arrange) {
 		/* see last two sentences in ICCCM 4.1.2.3 */
