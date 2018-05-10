@@ -92,6 +92,7 @@ enum { NetSupported, NetWMName, NetWMState, NetWMCheck,
        NetWMWindowTypeDialog, NetClientList,
        NetWMPid,
        NetDesktopNames, NetNumberOfDesktops,
+       NetCurrentDesktop,
        NetLast }; /* EWMH atoms */
 enum { Manager, Xembed, XembedInfo, XLast }; /* Xembed atoms */
 enum { WMProtocols, WMDelete, WMState, WMTakeFocus, WMLast }; /* default atoms */
@@ -259,6 +260,7 @@ static void run(void);
 static void scan(void);
 static Bool sendevent(Window w, Atom proto, int m, long d0, long d1, long d2, long d3, long d4);
 static void sendmon(Client *c, Monitor *m);
+static void set_net_current_desktop();
 static void setclientstate(Client *c, long state);
 static void setfocus(Client *c);
 static void setfullscreen(Client *c, int fullscreen);
@@ -731,6 +733,15 @@ clientmessage(XEvent *e)
 		}
 		return;
 	}
+
+	if (cme->message_type == netatom[NetCurrentDesktop]) {
+		int tag = (cme->data.l[0] == (unsigned long)-1) ? TAGMASK : cme->data.l[0];
+//		fprintf(stderr, "NET_CURRENT_DESKTOP client %s: %lu = tag %d\n",
+//			c->name, cme->data.l[0], tag);
+		Arg a = { .ui = 1 << tag  };
+		view(&a);
+	}
+
 	if (!c)
 		return;
 	if (cme->message_type == netatom[NetWMState]) {
@@ -1971,6 +1982,20 @@ sendevent(Window w, Atom proto, int mask, long d0, long d1, long d2, long d3, lo
 }
 
 void
+set_net_current_desktop()
+{
+	unsigned int tagset = selmon->tagset[selmon->seltags];
+	int i, j = 0, ntags = 0;
+	for (i = 0; i < LENGTH(tags); i++)
+		if (tagset & (1 << i)) {
+			j = i;
+			if (++ntags > 1)
+				break;
+		}
+	XChangeProperty(dpy, root, netatom[NetCurrentDesktop], XA_CARDINAL, 32, PropModeReplace, (unsigned char *) &j, 1);
+}
+
+void
 setfocus(Client *c)
 {
 	if (!c->neverfocus) {
@@ -2104,6 +2129,7 @@ setup(void)
 	netatom[NetWMPid] = XInternAtom(dpy, "_NET_WM_PID", False);
 	netatom[NetDesktopNames] = XInternAtom(dpy, "_NET_DESKTOP_NAMES", False);
 	netatom[NetNumberOfDesktops] = XInternAtom(dpy, "_NET_NUMBER_OF_DESKTOPS", False);
+	netatom[NetCurrentDesktop] = XInternAtom(dpy, "_NET_CURRENT_DESKTOP", False);
 	dwmatom[DWMTags] = XInternAtom(dpy, "DWM_TAGS", False);
 	xatom[Manager] = XInternAtom(dpy, "MANAGER", False);
 	xatom[Xembed] = XInternAtom(dpy, "_XEMBED", False);
@@ -2429,6 +2455,7 @@ toggleview(const Arg *arg)
 		if (selmon->showbar != selmon->pertag->showbars[selmon->pertag->curtag])
 			togglebar(NULL);
 		focus(NULL);
+		set_net_current_desktop();
 		arrange(selmon);
 		Last_Event_Time = CurrentTime;
 	}
@@ -2886,6 +2913,7 @@ view(const Arg *arg)
 	if (selmon->showbar != selmon->pertag->showbars[selmon->pertag->curtag])
 		togglebar(NULL);
 	focus(NULL);
+	set_net_current_desktop();
 	arrange(selmon);
 	Last_Event_Time = CurrentTime;
 }
