@@ -1513,6 +1513,7 @@ manage(Window w, XWindowAttributes *wa)
 	if (term)
 		swallow(term, c);
 	focus(NULL);
+	updateclientlist();
 }
 
 void
