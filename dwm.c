@@ -770,8 +770,21 @@ clientmessage(XEvent *e)
 			setfullscreen(c, (cme->data.l[0] == 1 /* _NET_WM_STATE_ADD    */
 				|| (cme->data.l[0] == 2 /* _NET_WM_STATE_TOGGLE */ && !c->isfullscreen)));
 	} else if (cme->message_type == netatom[NetActiveWindow]) {
-		if (c != selmon->sel && !c->isurgent)
-			seturgent(c, 1);
+//		if (c != selmon->sel && !c->isurgent)
+//			seturgent(c, 1);
+//		int frompagerp = (cme->data.l[0] == 2); /* source indicator */
+		{
+			int i;
+			for(i=0; i < LENGTH(tags) && !((1 << i) & c->tags); i++);
+			if(i < LENGTH(tags)) {
+				const Arg a = {.ui = 1 << i};
+				view(&a);
+				focus(c);
+				XRaiseWindow(dpy,c->win);
+				restack(selmon);
+				//WARP(c);
+			}
+		}
 	}
 }
 
