@@ -92,7 +92,7 @@ enum { NetSupported, NetWMName, NetWMState, NetWMCheck,
        NetWMWindowTypeDialog, NetClientList,
        NetWMPid,
        NetDesktopNames, NetNumberOfDesktops,
-       NetCurrentDesktop,
+       NetCurrentDesktop, NetWMDesktop,
        NetLast }; /* EWMH atoms */
 enum { Manager, Xembed, XembedInfo, XLast }; /* Xembed atoms */
 enum { WMProtocols, WMDelete, WMState, WMTakeFocus, WMLast }; /* default atoms */
@@ -764,6 +764,21 @@ clientmessage(XEvent *e)
 				restack(selmon);
 				//WARP(c);
 			}
+		}
+	}
+	else if (cme->message_type == netatom[NetWMDesktop]) {
+		/* The EWMH spec states that if the cardinal returned
+		 * is 0xFFFFFFFF (-1) then the window should appear on
+		 * all desktops */
+		int tagno = (cme->data.l[0] == (unsigned long)-1)
+			? TAGMASK : cme->data.l[0];
+//		fprintf(stderr, "NET WM DESKTOP client %s: %lu = tag %d\n",
+//			c->name, cme->data.l[0], tagno) ;
+		if (selmon->sel == c) {
+				Arg a = { .ui = 1<< tagno };
+				tag(&a);
+		} else {
+//			fprintf(stderr, "not selected\n");
 		}
 	}
 }
@@ -2073,15 +2088,26 @@ setmfact(const Arg *arg)
 */
 
 void
-settagsprop(Window w, unsigned int tags)
+settagsprop(Window w, unsigned int _tags)
 {
-	unsigned int v[1] = { tags };
+	unsigned int v[1] = { _tags };
 	XTextProperty p;
 	p.value = (unsigned char *)v;
 	p.encoding = XA_CARDINAL;
 	p.format = 32;
 	p.nitems = LENGTH(v);
 	XSetTextProperty(dpy, w, &p, dwmatom[DWMTags]);
+	int i, j = 0, ntags = 0;
+	for (i = 0; i < LENGTH(tags); i++)
+		if (_tags & (1 << i)) {
+			j = i;
+			if (++ntags > 1) break;
+		}
+	unsigned long x = -1; // all desktops
+	if (ntags == 1) x = j;
+	XChangeProperty(dpy, w, netatom[NetWMDesktop], XA_CARDINAL, 32,
+			PropModeReplace,
+			(unsigned char *) &x, 1);
 }
 
 void
@@ -2130,6 +2156,7 @@ setup(void)
 	netatom[NetDesktopNames] = XInternAtom(dpy, "_NET_DESKTOP_NAMES", False);
 	netatom[NetNumberOfDesktops] = XInternAtom(dpy, "_NET_NUMBER_OF_DESKTOPS", False);
 	netatom[NetCurrentDesktop] = XInternAtom(dpy, "_NET_CURRENT_DESKTOP", False);
+	netatom[NetWMDesktop] = XInternAtom(dpy, "_NET_WM_DESKTOP", False);
 	dwmatom[DWMTags] = XInternAtom(dpy, "DWM_TAGS", False);
 	xatom[Manager] = XInternAtom(dpy, "MANAGER", False);
 	xatom[Xembed] = XInternAtom(dpy, "_XEMBED", False);
@@ -2497,6 +2524,7 @@ unmanage(Client *c, int destroyed)
 	detach(c);
 	detachstack(c);
 	if (!destroyed) {
+		XDeleteProperty(dpy, c->win, netatom[NetWMDesktop]);
 		wc.border_width = c->oldbw;
 		XGrabServer(dpy); /* avoid race conditions */
 		XSetErrorHandler(xerrordummy);
