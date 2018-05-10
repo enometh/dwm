@@ -91,6 +91,7 @@ enum { NetSupported, NetWMName, NetWMState, NetWMCheck,
        NetSystemTray, NetSystemTrayOP, NetSystemTrayOrientation,
        NetWMWindowTypeDialog, NetClientList,
        NetWMPid,
+       NetDesktopNames, NetNumberOfDesktops,
        NetLast }; /* EWMH atoms */
 enum { Manager, Xembed, XembedInfo, XLast }; /* Xembed atoms */
 enum { WMProtocols, WMDelete, WMState, WMTakeFocus, WMLast }; /* default atoms */
@@ -2101,7 +2102,8 @@ setup(void)
 	netatom[NetWMWindowTypeDialog] = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE_DIALOG", False);
 	netatom[NetClientList] = XInternAtom(dpy, "_NET_CLIENT_LIST", False);
 	netatom[NetWMPid] = XInternAtom(dpy, "_NET_WM_PID", False);
-
+	netatom[NetDesktopNames] = XInternAtom(dpy, "_NET_DESKTOP_NAMES", False);
+	netatom[NetNumberOfDesktops] = XInternAtom(dpy, "_NET_NUMBER_OF_DESKTOPS", False);
 	dwmatom[DWMTags] = XInternAtom(dpy, "DWM_TAGS", False);
 	xatom[Manager] = XInternAtom(dpy, "MANAGER", False);
 	xatom[Xembed] = XInternAtom(dpy, "_XEMBED", False);
@@ -2131,6 +2133,31 @@ setup(void)
 	XChangeProperty(dpy, root, netatom[NetSupported], XA_ATOM, 32,
 		PropModeReplace, (unsigned char *) netatom, NetLast);
 	XDeleteProperty(dpy, root, netatom[NetClientList]);
+
+	/* initialize desktop names */
+	{
+		unsigned long i = LENGTH(tags);
+		XChangeProperty(dpy, root, netatom[NetNumberOfDesktops],
+				XA_CARDINAL, 32, PropModeReplace,
+				(unsigned char *) &i, 1);
+		XDeleteProperty(dpy, root, netatom[NetDesktopNames]);
+		char buf[26 * LENGTH(tags)], *p;
+		int tlen = 0;
+		for(i = 0, p = buf; i < LENGTH(tags); i++) {
+			const char *str; int len;
+			str = "Desktop "; len = strlen(str);
+			strcpy(p, str); p += len; tlen += len;
+			str = tags[i]; len = strlen(str);
+			strcpy(p, str); p += len; tlen += len;
+			if (*p != 0 || !(tlen < sizeof(buf) - 2)) {
+				die("ASSERT ERROR\n");
+			}
+			p++; tlen++;
+		}
+		XChangeProperty(dpy, root, netatom[NetDesktopNames],
+				utf8string, 8, PropModeReplace,
+				(unsigned char *) buf, tlen);
+	}
 	/* select events */
 	wa.cursor = cursor[CurNormal]->cursor;
 
