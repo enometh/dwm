@@ -93,6 +93,7 @@ enum { NetSupported, NetWMName, NetWMState, NetWMCheck,
        NetWMPid,
        NetDesktopNames, NetNumberOfDesktops,
        NetCurrentDesktop, NetWMDesktop,
+       NetWMSkipTaskbar,
        NetLast }; /* EWMH atoms */
 enum { Manager, Xembed, XembedInfo, XLast }; /* Xembed atoms */
 enum { WMProtocols, WMDelete, WMState, WMTakeFocus, WMLast }; /* default atoms */
@@ -201,6 +202,7 @@ static void arrange(Monitor *m);
 static void arrangemon(Monitor *m);
 static void attach(Client *c);
 static void attachstack(Client *c);
+static Bool atompropop(Window w, Atom prop, Atom value, int op);
 static void buttonpress(XEvent *e);
 static void checkotherwm(void);
 static void cleanup(void);
@@ -538,6 +540,95 @@ attachstack(Client *c)
 	c->mon->stack = c;
 }
 
+/* mode = 0: has, mode=1, add, mode=2 delete.
+get mode=3 - val is the index of the property to retrieve
+*/
+Bool
+atompropop(Window w, Atom prop, Atom value, int mode)
+{
+
+	Atom realtype;
+	unsigned long n, extra;
+	int format, i = 0;
+	Atom *p;
+
+	if (XGetWindowProperty(dpy, w, prop, 0L, 64L, False, XA_ATOM,
+			       &realtype, &format, &n, &extra,
+			       (unsigned char **)&p)
+	    != Success)
+		return False;
+
+	if  (p == NULL)
+		if (mode == 0 || mode == 2) {
+			return False;
+		}
+
+	if (n == 0) {
+		if (mode == 0 || mode == 2 || mode == 3) {
+			XFree(p);
+			return False;
+		}
+	}
+
+	if (mode == 3) {
+		Atom ret = (value < n) ? p[value] : False;
+		XFree(p);
+		return ret;
+	}
+
+	int found = 0;
+	for (i = 0; i < n; i++)
+		if (value == p[i]) {
+			found++;
+			if (mode == 0) {
+				XFree(p);
+				return True;
+			}
+		}
+	if (mode == 0) {
+		XFree(p);
+		return found ? True : False;
+	}
+
+	if (mode == 2 && !found) {
+		XFree(p);
+		return True;
+	}
+
+	if (mode == 1 && found) {
+		XFree(p);
+		return True;
+	}
+
+	int newsize = (mode == 1) ? 1 + n : n - found;
+
+	Atom *ret;
+	if (!(ret = (Atom *)calloc(newsize, sizeof(Atom))))
+		if (! (mode == 2 && newsize == 0))
+			die("fatal: could not malloc() %u bytes\n",
+			    sizeof(Atom) * newsize);
+	int j = 0;
+	for (i = 0; i < n; i++) {
+		if (mode == 1 || (mode == 2 && p[i] != value))
+			ret[j++] = p[i];
+	}
+
+	if (mode == 1)
+		ret[j++] = value;
+	if (j != newsize) die("assert");
+
+
+	Bool retval = XChangeProperty(dpy, w, prop, XA_ATOM, 32,
+				      PropModeReplace,
+				      (unsigned char *)ret, j);
+	if (mode == 1 && newsize == 1)
+		if (! (ret[0] == value))
+			die("wtf");
+	if (ret) free(ret);
+	XFree(p);
+	return retval;
+}
+
 void
 swallow(Client *p, Client *c)
 {
@@ -781,6 +872,19 @@ clientmessage(XEvent *e)
 		|| cme->data.l[2] == netatom[NetWMFullscreen])
 			setfullscreen(c, (cme->data.l[0] == 1 /* _NET_WM_STATE_ADD    */
 				|| (cme->data.l[0] == 2 /* _NET_WM_STATE_TOGGLE */ && !c->isfullscreen)));
+		else if (cme->data.l[1] == netatom[NetWMSkipTaskbar]
+			 || cme->data.l[2] == netatom[NetWMSkipTaskbar]) {
+			Window w = cme->window;
+			switch(cme->data.l[0]) {
+			case 0: //_NET_WM_STATE_REMOVE
+				atompropop(w, netatom[NetWMState], netatom[NetWMSkipTaskbar], 2); break;
+			case 1: //_NET_WM_STATE_ADD
+				atompropop(w, netatom[NetWMState], netatom[NetWMSkipTaskbar], 1); break;
+			case 2: //NET_WM_STATE_TOGGLE
+
+				atompropop(w, netatom[NetWMState], netatom[NetWMSkipTaskbar], atompropop(w, netatom[NetWMState], netatom[NetWMSkipTaskbar], 0) ? 2 : 1);
+			}
+		}
 	} else if (cme->message_type == netatom[NetActiveWindow]) {
 //		if (c != selmon->sel && !c->isurgent)
 //			seturgent(c, 1);
@@ -2069,8 +2173,10 @@ void
 setfullscreen(Client *c, int fullscreen)
 {
 	if (fullscreen && !c->isfullscreen) {
-		XChangeProperty(dpy, c->win, netatom[NetWMState], XA_ATOM, 32,
-			PropModeReplace, (unsigned char*)&netatom[NetWMFullscreen], 1);
+//		XChangeProperty(dpy, c->win, netatom[NetWMState], XA_ATOM, 32,
+//			PropModeReplace, (unsigned char*)&netatom[NetWMFullscreen], 1);
+		atompropop(c->win, netatom[NetWMState],
+			   netatom[NetWMFullscreen], 1); // add
 		c->isfullscreen = 1;
 		c->oldstate = c->isfloating;
 		c->oldbw = c->bw;
@@ -2079,8 +2185,10 @@ setfullscreen(Client *c, int fullscreen)
 		resizeclient(c, c->mon->mx, c->mon->my, c->mon->mw, c->mon->mh);
 		XRaiseWindow(dpy, c->win);
 	} else if (!fullscreen && c->isfullscreen){
-		XChangeProperty(dpy, c->win, netatom[NetWMState], XA_ATOM, 32,
-			PropModeReplace, (unsigned char*)0, 0);
+//		XChangeProperty(dpy, c->win, netatom[NetWMState], XA_ATOM, 32,
+//			PropModeReplace, (unsigned char*)0, 0);
+		atompropop(c->win, netatom[NetWMState],
+			   netatom[NetWMFullscreen], 2); //delete
 		c->isfullscreen = 0;
 		c->isfloating = c->oldstate;
 		c->bw = c->oldbw;
@@ -2147,6 +2255,10 @@ settagsprop(Window w, unsigned int _tags)
 	XChangeProperty(dpy, w, netatom[NetWMDesktop], XA_CARDINAL, 32,
 			PropModeReplace,
 			(unsigned char *) &x, 1);
+	// add _NET_WM_STATE_SKIP_TASKBAR to _NET_WM_STATE if the
+	// window is displayed on all tags. Remove it if not.
+	atompropop(w, netatom[NetWMState], netatom[NetWMSkipTaskbar],
+		   (_tags == TAGMASK) ? 1 : 2);
 }
 
 void
@@ -2203,6 +2315,7 @@ setup(void)
 	netatom[NetNumberOfDesktops] = XInternAtom(dpy, "_NET_NUMBER_OF_DESKTOPS", False);
 	netatom[NetCurrentDesktop] = XInternAtom(dpy, "_NET_CURRENT_DESKTOP", False);
 	netatom[NetWMDesktop] = XInternAtom(dpy, "_NET_WM_DESKTOP", False);
+	netatom[NetWMSkipTaskbar] = XInternAtom(dpy, "_NET_WM_STATE_SKIP_TASKBAR", False);
 	dwmatom[DWMTags] = XInternAtom(dpy, "DWM_TAGS", False);
 	xatom[Manager] = XInternAtom(dpy, "MANAGER", False);
 	xatom[Xembed] = XInternAtom(dpy, "_XEMBED", False);
