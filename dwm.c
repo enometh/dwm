@@ -1151,7 +1151,8 @@ drawbar(Monitor *m)
 	for (c = m->clients; c; c = c->next) {
 		if (ISVISIBLE(c))
 			n++;
-		occ |= c->tags;
+		if (c->tags != TAGMASK)
+			occ |= c->tags;
 		if (c->isurgent)
 			urg |= c->tags;
 	}
