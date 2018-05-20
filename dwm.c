@@ -50,6 +50,7 @@
 #define INTERSECT(x,y,w,h,m)    (MAX(0, MIN((x)+(w),(m)->wx+(m)->ww) - MAX((x),(m)->wx)) \
                                * MAX(0, MIN((y)+(h),(m)->wy+(m)->wh) - MAX((y),(m)->wy)))
 #define ISVISIBLE(C)            ((C->tags & C->mon->tagset[C->mon->seltags]))
+#define X_ISVISIBLE(C)		(ISVISIBLE(C) &&  (c->tags != TAGMASK))
 #define LENGTH(X)               (sizeof X / sizeof X[0])
 #define MOUSEMASK               (BUTTONMASK|PointerMotionMask)
 #define WIDTH(X)                ((X)->w + 2 * (X)->bw)
@@ -273,7 +274,7 @@ static void setup(void);
 static void seturgent(Client *c, int urg);
 static void showhide(Client *c);
 static void spawn(const Arg *arg);
-static int stackpos(const Arg *arg);
+static int stackpos(const Arg *arg, int exludetaggedall);
 static Client *swallowingclient(Window w);
 static void tag(const Arg *arg);
 static void tagmon(const Arg *arg);
@@ -1329,16 +1330,18 @@ focusmon(const Arg *arg)
 void
 focusstack(const Arg *arg)
 {
-	int i = stackpos(arg);
+	int i = stackpos(arg, ISINC(arg->i));
 	Client *c, *p;
 
 	if (i < 0)
 		return;
+#define Y_ISVISIBLE(C) ((ISINC(arg->i) ? X_ISVISIBLE(C) : ISVISIBLE(C)))
 
-	for (p = NULL, c = selmon->clients; c && (i || !ISVISIBLE(c));
-	    i -= ISVISIBLE(c) ? 1 : 0, p = c, c = c->next);
+	for (p = NULL, c = selmon->clients; c && (i || !Y_ISVISIBLE(c));
+	    i -= Y_ISVISIBLE(c) ? 1 : 0, p = c, c = c->next);
 	focus(c ? c : p);
 	restack(selmon);
+#undef Y_ISVISIBLE
 }
 
 Atom
@@ -1830,7 +1833,7 @@ propertynotify(XEvent *e)
 void
 pushstack(const Arg *arg)
 {
-	int i = stackpos(arg);
+	int i = stackpos(arg, 0);
 	Client *sel = selmon->sel, *c, *p;
 
 	if (i < 0)
@@ -2444,7 +2447,7 @@ spawn(const Arg *arg)
 }
 
 int
-stackpos(const Arg *arg) {
+stackpos(const Arg *arg, int excludep) {
 	int n, i;
 	Client *c, *l;
 
@@ -2458,14 +2461,13 @@ stackpos(const Arg *arg) {
 		return -1;  /* ;madhu 210819 FIXME * /
 	*/
 
-
 	if (!selmon->clients)
 		return -1;
 
-
-
+#define Y_ISVISIBLE(C) ((excludep ? X_ISVISIBLE(C) : ISVISIBLE(C)))
 	if (arg->i == PREVSEL) {
-		for (l = selmon->stack; l && (!ISVISIBLE(l) || l == selmon->sel); l = l->snext);
+		if (!excludep) fprintf(stderr, "stackpos PREVSEL wtf\n");
+		for (l = selmon->stack; l && (!ISVISIBLE(l) || (!excludep || l == selmon->sel)); l = l->snext);
 		if (!l)
 			return -1;
 		for (i = 0, c = selmon->clients; c != l; i += ISVISIBLE(c) ? 1 : 0, c = c->next);
@@ -2474,16 +2476,18 @@ stackpos(const Arg *arg) {
 	else if (ISINC(arg->i)) {
 		if (!selmon->sel)
 			return -1;
-		for (i = 0, c = selmon->clients; c != selmon->sel; i += ISVISIBLE(c) ? 1 : 0, c = c->next);
-		for (n = i; c; n += ISVISIBLE(c) ? 1 : 0, c = c->next);
-		return MOD(i + GETINC(arg->i), n);
+		for (i = 0, c = selmon->clients; c != selmon->sel; i += Y_ISVISIBLE(c) ? 1 : 0, c = c->next);
+		for (n = i; c; n += Y_ISVISIBLE(c) ? 1 : 0, c = c->next);
+		 // avoid cornercase division by 0
+		return n == 0 ? 0 : MOD(i + GETINC(arg->i), n);
 	}
 	else if (arg->i < 0) {
-		for (i = 0, c = selmon->clients; c; i += ISVISIBLE(c) ? 1 : 0, c = c->next);
+		for (i = 0, c = selmon->clients; c; i += Y_ISVISIBLE(c) ? 1 : 0, c = c->next);
 		return MAX(i + arg->i, 0);
 	}
 	else
 		return arg->i;
+#undef Y_ISVISIBLE
 }
 
 void
