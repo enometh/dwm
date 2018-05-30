@@ -1579,11 +1579,20 @@ manage(Window w, XWindowAttributes *wa)
 		if (!XGetWMNormalHints(dpy, w, &size, &tmp))
 			size.flags = 0;
 		if (!(size.flags & (USPosition | PPosition))) {
+			int px, py;
+			// place under mouse
+			if (getrootptr(&px, &py)) {
+				wa->x = px;
+				wa->y = py;
+				goto ok;
+			}
+
 			wa->x = c->mon->wx + (sw - wa->width) / 2;
 			wa->y = c->mon->wy + (sh - wa->height) / 2;
 		}
 	}
 
+ok:
 	c->x = c->oldx = (wa->x % sw) + c->mon->wx;
 	c->y = c->oldy = wa->y + ((c->mon->topbar == True && wa->y !=0 ) ? 0 : c->mon->wy);
 	c->w = c->oldw = wa->width;
