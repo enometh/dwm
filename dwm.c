@@ -195,6 +195,9 @@ struct Systray {
 	Client *icons;
 };
 
+enum placement_style { centered, under_mouse, };
+extern enum placement_style placement_style; 
+
 /* function declarations */
 static void applyrules(Client *c);
 static int applysizehints(Client *c, int *x, int *y, int *w, int *h, int interact);
@@ -1566,19 +1569,17 @@ manage(Window w, XWindowAttributes *wa)
 			size.flags = 0;
 		if (!(size.flags & (USPosition | PPosition))) {
 			int px, py;
-			// place under mouse
-			if (getrootptr(&px, &py)) {
+			if ((placement_style == under_mouse) &&
+			    getrootptr(&px, &py)) {
 				wa->x = px;
 				wa->y = py;
-				goto ok;
+			} else { //centered
+			  wa->x = c->mon->wx + (sw - wa->width) / 2;
+			  wa->y = c->mon->wy + (sh - wa->height) / 2;
 			}
-
-			wa->x = c->mon->wx + (sw - wa->width) / 2;
-			wa->y = c->mon->wy + (sh - wa->height) / 2;
 		}
 	}
 
-ok:
 	c->x = c->oldx = (wa->x % sw) + c->mon->wx;
 	c->y = c->oldy = wa->y + ((c->mon->topbar == True && wa->y !=0 ) ? 0 : c->mon->wy);
 	c->w = c->oldw = wa->width;
