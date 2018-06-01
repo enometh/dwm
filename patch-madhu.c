@@ -222,3 +222,12 @@ mywarp(const Arg *arg)
 	  WARP(c);
 	}
 }
+
+static void
+toggle_placement_style(const Arg *arg)
+{
+  if (placement_style == centered)
+    placement_style = under_mouse;
+  else if (placement_style == under_mouse)
+    placement_style = centered;
+}
