@@ -104,6 +104,8 @@ static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, /* "-fn", "fixed"
 //static const char *termcmd[]  = { "st", NULL };
 static const char *termcmd[]  = { "xterm", NULL };
 
+enum placement_style placement_style = under_mouse;
+
 static const Key keys[] = {
 	/* modifier                     key        function        argument */
 	{ MODKEY_ALT|ShiftMask,         XK_g,      identify_wintitle,   {0} },
@@ -170,6 +172,7 @@ static const Key keys[] = {
 	{ MODKEY|ShiftMask|ControlMask, XK_u,      unswallow_now,   {0} }, //;madhu 231223
 	{ MODKEY|ShiftMask,             XK_u,      focusurgent,    {0} }, //madhu 170621
 	{ MODKEY_ALT,			XK_w,	   mywarp,	   {0} }, // madhu 170814
+	{ MODKEY_ALT,			XK_p,	   toggle_placement_style, {0} }, //madhu 180601
 };
 
 /* button definitions */
