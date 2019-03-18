@@ -49,6 +49,7 @@ static const int dirs[3]      = { DirHor, DirVer, DirVer }; /* tiling dirs */
 static const float facts[3]   = { 1.1,    1.1,    1.1 };    /* tiling facts */
 
 static const int nmaster     = 1;    /* number of clients in master area */
+static const int n_non_master_columns = 2;
 static       int resizehints = 1;    /* 1 means respect size hints in tiled resizals */
 static const int lockfullscreen = 1; /* 1 will force focus on the fullscreen window */
 
@@ -114,6 +115,10 @@ static const Key keys[] = {
 //stack	{ MODKEY,                       XK_k,      focusstack,     {.i = -1 } },
 	{ MODKEY|ShiftMask,             XK_i,      incnmaster,     {.i = +1 } },
 	{ MODKEY|ShiftMask,             XK_d,      incnmaster,     {.i = -1 } },
+
+	{ MODKEY|ShiftMask|ControlMask, XK_i,      incnstackcols,  {.i = +1 } },
+	{ MODKEY|ShiftMask|ControlMask, XK_d,      incnstackcols,  {.i = -1 } },
+
 //xtile	{ MODKEY|ShiftMask,             XK_h,      setmfact,       {.f = -0.05} },
 //xtile	{ MODKEY|ShiftMask,             XK_l,      setmfact,       {.f = +0.05} },
 	{ MODKEY,                       XK_Return, zoom,           {0} },

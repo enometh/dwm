@@ -160,6 +160,7 @@ typedef struct Pertag Pertag;
 struct Monitor {
 	char ltsymbol[16];
 	int nmaster;
+	int n_non_master_columns;
 	int num;
 	int by;               /* bar geometry */
 	int mx, my, mw, mh;   /* screen size */
@@ -240,6 +241,7 @@ static int gettextprop(Window w, Atom atom, char *text, unsigned int size);
 static void grabbuttons(Client *c, int focused);
 static void grabkeys(void);
 static void incnmaster(const Arg *arg);
+static void incnstackcols(const Arg *arg);
 static int isdescprocess(pid_t p, pid_t c);
 static void keypress(XEvent *e);
 static void killclient(const Arg *arg);
@@ -368,6 +370,7 @@ static Colormap cmap;
 struct Pertag {
 	unsigned int curtag, prevtag; /* current and previous tag */
 	int nmasters[LENGTH(tags) + 1]; /* number of windows in master area */
+	int n_non_master_columns[LENGTH(tags) + 1];
 	Area areas[LENGTH(tags) + 1][3]; /* tiling areas */
 	unsigned int sellts[LENGTH(tags) + 1]; /* selected layouts */
 	const Layout *ltidxs[LENGTH(tags) + 1][2]; /* matrix of tags and layouts indexes  */
@@ -1039,6 +1042,7 @@ createmon(void)
 	m = ecalloc(1, sizeof(Monitor));
 	m->tagset[0] = m->tagset[1] = 1;
 	m->nmaster = nmaster;
+	m->n_non_master_columns = n_non_master_columns;
 	m->showbar = showbar;
 	m->topbar = topbar;
 	m->lt[0] = &layouts[0];
@@ -1050,6 +1054,7 @@ createmon(void)
 	for (i=0; i <= LENGTH(tags); i++) {
 		/* init nmaster */
 		m->pertag->nmasters[i] = m->nmaster;
+		m->pertag->n_non_master_columns[i] = m->n_non_master_columns;
 
 		/* init tiling dirs and facts */
 		for (j = 0; j < 3; j++) {
@@ -1503,6 +1508,14 @@ void
 incnmaster(const Arg *arg)
 {
 	selmon->nmaster = selmon->pertag->nmasters[selmon->pertag->curtag] = MAX(selmon->nmaster + arg->i, 0);
+	arrange(selmon);
+}
+
+void
+incnstackcols(const Arg *arg)
+{
+	int new = selmon->n_non_master_columns + arg->i;
+	selmon->n_non_master_columns = selmon->pertag->n_non_master_columns[selmon->pertag->curtag] = MAX(new, 1);
 	arrange(selmon);
 }
 
@@ -2547,6 +2560,21 @@ tile(Monitor *m)
 		ms = f * m->wh, ss = m->wh - ms,
 		ma->x = 0, ma->y = ga->dir == DirVer ? 0 : ss, ma->fx = m->ww, ma->fy = ma->y + ms,
 		sa->x = 0, sa->y = ga->dir == DirVer ? ms : 0, sa->fx = m->ww, sa->fy = sa->y + ss;
+
+	/* gaplessgrid.c - arrange non-master clients in a gapless
+	 * grid of at most n_non_master_columns which is always at
+	 * least 1
+	 */
+
+	int nstacked = n - ma->n; /* number of clients in non-master */
+	int cols = nstacked ? MIN(m->n_non_master_columns, nstacked) : 0;
+	int rows = cols ? nstacked / cols : 0;
+	if (rows && nstacked > rows * cols) rows++;
+
+	int rn = 0, cn = 0;	/* current row/col */
+	int cw, ch;		/* cell width/height */
+	int ax, ay;
+
 	/* tile clients */
 	for (c = nexttiled(m->clients), i = 0; i < n; c = nexttiled(c->next), i++) {
 		if (i == 0 || i == ma->n) {
@@ -2562,9 +2590,66 @@ tile(Monitor *m)
 			w = (a->dir == DirVer ? 1 : f) * (a->fx - a->x);
 			h = (a->dir == DirHor ? 1 : f) * (a->fy - a->y);
 		}
-		resize(c, m->wx + a->x, m->wy + a->y, w - 2 * c->bw, h - 2 * c->bw, False);
-		a->x += a->dir == DirHor ? WIDTH(c) : 0;
-		a->y += a->dir == DirVer ? HEIGHT(c) : 0;
+
+		if (a == sa && cols > 1) {
+			int j = i - ma->n; /* ordinal number in stack */
+
+			// carlos complicated facts
+			if (j == 0) {
+				ax = a->x, ay = a->y;
+				int nelem = (a->dir == DirVer ? rows : cols);
+				f = (nelem > 1) ? a->fact / (a->fact + nelem - 1) : 1.0;
+				cw = (a->dir == DirVer ? 1.0 /cols : f) * (a->fx - ax);
+				ch = (a->dir == DirHor ? 1.0 /rows : f) * (a->fy - ay);
+			} else if ((j + 1) == nstacked) {
+				cw = (a->fx - ax);
+				ch = (a->fy - ay);
+			} else if (j == (a->dir == DirVer ? cols : rows)) {
+				int nelem = (a->dir == DirVer ? rows : cols);
+				f = (nelem > 1) ? 1.0 / (nelem - 1) : 1.0;
+				cw = (a->dir == DirVer ? 1.0 /cols : f) * (a->fx - ax);
+				ch = (a->dir == DirHor ? 1.0 /rows : f) * (a->fy - ay);
+			}
+
+			/* // without complicated facts
+			if (j == 0 || j == (a->dir == DirVer ? cols : rows)) {
+				if (j == 0) ax = a->x, ay = a->y;
+				ch = (a->fy - a->y) / rows;
+				cw = (a->fx - a->x) / cols;
+			} else if ((j + 1) == nstacked) {
+				ch = a->fy - ay;
+				cw = a->fx - ax;
+			}
+			*/
+
+			resize(c, m->wx + ax, m->wy + ay,
+			       cw - 2 * c->bw,
+			       ch - 2 * c->bw,
+			       False);
+			if (a->dir == DirVer) {
+				cn++;
+				ax += cw /*WIDTH(c)*/;
+				if (cn >= cols) {
+					cn = 0;
+					rn++;
+					ax = a->x;
+					ay += ch /*HEIGHT(c)*/;
+				}
+			} else {
+				rn++;
+				ay += ch /*HEIGHT(c)*/;
+				if (rn >= rows) {
+					rn = 0;
+					cn++;
+					ay = a->y;
+					ax += cw /*WIDTH(c)*/;
+				}
+			}
+		} else {
+			resize(c, m->wx + a->x, m->wy + a->y, w - 2 * c->bw, h - 2 * c->bw, False);
+			a->x += a->dir == DirHor ? w /*WIDTH(c)*/ : 0;
+			a->y += a->dir == DirVer ? h /*HEIGHT(c)*/ : 0;
+		}
 	}
 }
 
@@ -2647,6 +2732,7 @@ toggleview(const Arg *arg)
 
 		/* apply settings for this view */
 		selmon->nmaster = selmon->pertag->nmasters[selmon->pertag->curtag];
+		selmon->n_non_master_columns = selmon->pertag->n_non_master_columns[selmon->pertag->curtag];
 		selmon->sellt = selmon->pertag->sellts[selmon->pertag->curtag];
 		selmon->lt[selmon->sellt] = selmon->pertag->ltidxs[selmon->pertag->curtag][selmon->sellt];
 		selmon->lt[selmon->sellt^1] = selmon->pertag->ltidxs[selmon->pertag->curtag][selmon->sellt^1];
@@ -3108,6 +3194,7 @@ view(const Arg *arg)
 		selmon->pertag->curtag = tmptag;
 	}
 	selmon->nmaster = selmon->pertag->nmasters[selmon->pertag->curtag];
+	selmon->n_non_master_columns = selmon->pertag->n_non_master_columns[selmon->pertag->curtag];
 	selmon->sellt = selmon->pertag->sellts[selmon->pertag->curtag];
 	selmon->lt[selmon->sellt] = selmon->pertag->ltidxs[selmon->pertag->curtag][selmon->sellt];
 	selmon->lt[selmon->sellt^1] = selmon->pertag->ltidxs[selmon->pertag->curtag][selmon->sellt^1];
