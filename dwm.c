@@ -2518,9 +2518,10 @@ tile(Monitor *m)
 		ma->x = 0, ma->y = ga->dir == DirVer ? 0 : ss, ma->fx = m->ww, ma->fy = ma->y + ms,
 		sa->x = 0, sa->y = ga->dir == DirVer ? ms : 0, sa->fx = m->ww, sa->fy = sa->y + ss;
 
-	/* gaplessgrid.c - arrange non-master clients in a gapless
-	 * grid of at most n_non_master_columns which is always at
-	 * least 1
+
+	/* gaplessgrid.c (i.e. no gaps in the grid - not no gaps
+	 * between tiles) arrange non-master clients in a gapless grid
+	 * of at most n_non_master_columns which is always at least 1
 	 */
 
 	int nstacked = n - ma->n; /* number of clients in non-master */
@@ -2536,16 +2537,20 @@ tile(Monitor *m)
 	for (c = nexttiled(m->clients), i = 0; i < n; c = nexttiled(c->next), i++) {
 		if (i == 0 || i == ma->n) {
 			a = (i == 0) ? ma : sa;
+			a->x += gappx; a->y += gappx;
 			f = (a->n > 1) ? a->fact / (a->fact + a->n - 1) : 1;
 			w = (a->dir == DirVer ? 1 : f) * (a->fx - a->x);
 			h = (a->dir == DirHor ? 1 : f) * (a->fy - a->y);
+			w -= gappx;  h -= gappx;
 		} else if ((i + 1) == ma->n || (i + 1) == n) {
 			w = (a->fx - a->x);
 			h = (a->fy - a->y);
+			w -= gappx;  h -= gappx;
 		} else if ((i - 1) == 0 || (i - 1) == ma->n) {
 			f = (a->n > 1) ? 1.0 / (a->n - 1) : 1;
 			w = (a->dir == DirVer ? 1 : f) * (a->fx - a->x);
 			h = (a->dir == DirHor ? 1 : f) * (a->fy - a->y);
+			w -= gappx;  h -= gappx;
 		}
 
 		if (a == sa && cols > 1) {
@@ -2558,14 +2563,17 @@ tile(Monitor *m)
 				f = (nelem > 1) ? a->fact / (a->fact + nelem - 1) : 1.0;
 				cw = (a->dir == DirVer ? 1.0 /cols : f) * (a->fx - ax);
 				ch = (a->dir == DirHor ? 1.0 /rows : f) * (a->fy - ay);
+				ch -= gappx; cw -= gappx;
 			} else if ((j + 1) == nstacked) {
 				cw = (a->fx - ax);
 				ch = (a->fy - ay);
+				ch -= gappx; cw -= gappx;
 			} else if (j == (a->dir == DirVer ? cols : rows)) {
 				int nelem = (a->dir == DirVer ? rows : cols);
 				f = (nelem > 1) ? 1.0 / (nelem - 1) : 1.0;
 				cw = (a->dir == DirVer ? 1.0 /cols : f) * (a->fx - ax);
 				ch = (a->dir == DirHor ? 1.0 /rows : f) * (a->fy - ay);
+				ch -= gappx;  cw -= gappx;
 			}
 
 			/* // without complicated facts
@@ -2585,27 +2593,32 @@ tile(Monitor *m)
 			       False);
 			if (a->dir == DirVer) {
 				cn++;
-				ax += cw /*WIDTH(c)*/;
+				ax += cw /* WIDTH(c) */;
+				ax += gappx;
 				if (cn >= cols) {
 					cn = 0;
 					rn++;
 					ax = a->x;
 					ay += ch /*HEIGHT(c)*/;
+					ay += gappx;
 				}
 			} else {
 				rn++;
 				ay += ch /*HEIGHT(c)*/;
+				ay += gappx;
 				if (rn >= rows) {
 					rn = 0;
 					cn++;
 					ay = a->y;
 					ax += cw /*WIDTH(c)*/;
+					ax += gappx;
 				}
 			}
 		} else {
 			resize(c, m->wx + a->x, m->wy + a->y, w - 2 * c->bw, h - 2 * c->bw, False);
-			a->x += a->dir == DirHor ? w /*WIDTH(c)*/ : 0;
-			a->y += a->dir == DirVer ? h /*HEIGHT(c)*/ : 0;
+			a->x += a->dir == DirHor ? w /*WIDTH(c)*/: 0;
+			a->y += a->dir == DirVer ? h /*HEIGHT(c)*/: 0;
+			if (a->dir == DirVer) a->y += gappx; else a->x += gappx;
 		}
 	}
 }
