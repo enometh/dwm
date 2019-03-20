@@ -2553,13 +2553,13 @@ tile(Monitor *m)
 	/* calculate area rectangles */
 	f = ma->n == 0 ? 0 : (sa->n == 0 ? 1 : ga->fact / 2);
 	if (ga->dir == DirHor || ga->dir == DirRotHor)
-		ms = f * m->ww, ss = m->ww - ms,
-		ma->x = ga->dir == DirHor ? 0 : ss, ma->y = 0, ma->fx = ma->x + ms, ma->fy = m->wh,
-		sa->x = ga->dir == DirHor ? ms : 0, sa->y = 0, sa->fx = sa->x + ss, sa->fy = m->wh;
+		ms = f * (m->ww - gappx), ss = m->ww - ms - gappx,
+		ma->x = ga->dir == DirHor ? gappx : ss + gappx, ma->y = gappx, ma->fx = ma->x + ms, ma->fy = m->wh,
+		sa->x = ga->dir == DirHor ? ms + gappx : gappx, sa->y = gappx, sa->fx = sa->x + ss, sa->fy = m->wh;
 	else
-		ms = f * m->wh, ss = m->wh - ms,
-		ma->x = 0, ma->y = ga->dir == DirVer ? 0 : ss, ma->fx = m->ww, ma->fy = ma->y + ms,
-		sa->x = 0, sa->y = ga->dir == DirVer ? ms : 0, sa->fx = m->ww, sa->fy = sa->y + ss;
+		ms = f * (m->wh - gappx), ss = m->wh - ms - gappx,
+		ma->x = gappx, ma->y = ga->dir == DirVer ? gappx : ss + gappx, ma->fx = m->ww, ma->fy = ma->y + ms,
+		sa->x = gappx, sa->y = ga->dir == DirVer ? ms + gappx : gappx, sa->fx = m->ww, sa->fy = sa->y + ss;
 
 
 	/* gaplessgrid.c (i.e. no gaps in the grid - not no gaps
@@ -2580,7 +2580,6 @@ tile(Monitor *m)
 	for (c = nexttiled(m->clients), i = 0; i < n; c = nexttiled(c->next), i++) {
 		if (i == 0 || i == ma->n) {
 			a = (i == 0) ? ma : sa;
-			a->x += gappx; a->y += gappx;
 			f = (a->n > 1) ? a->fact / (a->fact + a->n - 1) : 1;
 			w = (a->dir == DirVer ? 1 : f) * (a->fx - a->x);
 			h = (a->dir == DirHor ? 1 : f) * (a->fy - a->y);
