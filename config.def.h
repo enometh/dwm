@@ -1,5 +1,7 @@
 /* See LICENSE file for copyright and license details. */
 
+//#include <XF86Keysym.h>
+
 /* appearance */
 static const unsigned int borderpx  = 1;        /* border pixel of windows */
 /*static const*/ unsigned int gappx = 6;        /* gap pixel between windows */
@@ -74,6 +76,7 @@ static const Layout layouts[] = {
 /* key definitions */
 #define MODKEY Mod1Mask
 #define MODKEY_ALT Mod4Mask
+#define MODKEY Mod4Mask //XXX
 #define TAGKEYS(KEY,TAG) \
 	{ MODKEY,                       KEY,      view,           {.ui = 1 << TAG} }, \
 	{ MODKEY|ControlMask,           KEY,      toggleview,     {.ui = 1 << TAG} }, \
@@ -112,7 +115,7 @@ enum placement_style placement_style = under_mouse;
 
 static const Key keys[] = {
 	/* modifier                     key        function        argument */
-	{ MODKEY_ALT|ShiftMask,         XK_g,      identify_wintitle,   {0} },
+	{ MODKEY_ALT|ControlMask|ShiftMask, XK_g,  identify_wintitle,   {0} },
 	{ MODKEY|ShiftMask|ControlMask, XK_s,	   toggle_systray,	{0} }, // madhu 130424
 
 	{ MODKEY|ShiftMask,             XK_p,      spawn,          {.v = dmenucmd } },
@@ -155,9 +158,9 @@ static const Key keys[] = {
 	{ MODKEY|ShiftMask|ControlMask, XK_q,      quit,           {0} },
 
 	//toggleopacity
-	{ MODKEY_ALT,                   XK_l,      toggleopacity,  {0}, },
-	{ MODKEY_ALT,                   XK_j,      toggleopacity,  {.f = +0.1}, },
-	{ MODKEY_ALT,                   XK_k,      toggleopacity,  {.f = -0.1}, },
+	{ MODKEY_ALT|ShiftMask|ControlMask, XK_l,  toggleopacity,  {0}, },
+	{ MODKEY_ALT|ShiftMask|ControlMask, XK_j,  toggleopacity,  {.f = +0.1}, },
+	{ MODKEY_ALT|ShiftMask|ControlMask, XK_k,  toggleopacity,  {.f = -0.1}, },
 
 	// ;madhu 260904 fix xtile decouple setdir from TILEKEYS macros
 	{ MODKEY_ALT|ShiftMask , XK_r, setdirs,  {.v = (int[])  { INC(1 * +1),   INC(0 * +1),   INC(0 * +1) } } },
@@ -179,11 +182,11 @@ static const Key keys[] = {
 	{ MODKEY|ShiftMask,             XK_r,	   toggle_resizehints, {0}}, // madhu 080917
 	{ MODKEY|ShiftMask|ControlMask, XK_r,	   toggle_fixed,   {0}}, // madhu 120923
 	{ MODKEY|ShiftMask,             XK_w,      windowlist,     {0} }, // madhu 130402
-	{ MODKEY_ALT|ShiftMask,         XK_f,      myfocus,        {0} }, // madhu 090403
+	{ MODKEY_ALT|ShiftMask|ControlMask, XK_f,  myfocus,        {0} }, // madhu 090403
 	{ MODKEY|ShiftMask|ControlMask, XK_u,      unswallow_now,   {0} }, //;madhu 231223
 	{ MODKEY|ShiftMask,             XK_u,      focusurgent,    {0} }, //madhu 170621
-	{ MODKEY_ALT,			XK_w,	   mywarp,	   {0} }, // madhu 170814
-	{ MODKEY_ALT,			XK_p,	   toggle_placement_style, {0} }, //madhu 180601
+	{ MODKEY_ALT|ShiftMask|ControlMask, XK_w,  mywarp,	   {0} }, // madhu 170814
+	{ MODKEY_ALT|ShiftMask|ControlMask, XK_p,  toggle_placement_style, {0} }, //madhu 180601
 };
 
 /* button definitions */
