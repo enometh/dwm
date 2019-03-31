@@ -1,12 +1,14 @@
 /* See LICENSE file for copyright and license details. */
 
+//#include <XF86Keysym.h>
+
 /* appearance */
 static const unsigned int borderpx  = 1;        /* border pixel of windows */
 /*static const*/ unsigned int gappx = 6;        /* gap pixel between windows */
 static const unsigned int snap      = 32;       /* snap pixel */
 static const unsigned int systrayspacing = 2;   /* systray spacing */
 static       int showsystray        = 1;        /* False means no systray */
-static const double shade           = 0.6;      /* opacity of unfocussed clients */
+static const double shade           = 0.92;      /* opacity of unfocussed clients */
 static const int showbar            = 1;        /* 0 means no bar */
 static const int topbar             = 1;        /* 0 means bottom bar */
 static const char dmenufont[]       = "monospace:size=10";
@@ -70,6 +72,7 @@ static const Layout layouts[] = {
 /* key definitions */
 #define MODKEY Mod1Mask
 #define MODKEY_ALT Mod4Mask
+#define MODKEY Mod4Mask //XXX
 #define TAGKEYS(KEY,TAG) \
 	{ MODKEY,                       KEY,      view,           {.ui = 1 << TAG} }, \
 	{ MODKEY|ControlMask,           KEY,      toggleview,     {.ui = 1 << TAG} }, \
@@ -77,9 +80,16 @@ static const Layout layouts[] = {
 	{ MODKEY|ControlMask|ShiftMask, KEY,      toggletag,      {.ui = 1 << TAG} },
 
 #define TILEKEYS(MOD,G,M,S)						\
+	{ MOD, XK_a, setdirs,  {.v = (int[])  { INC(G * +1),   INC(M * +1),   INC(S * +1) } } }, \
+	{ MOD, XK_x, setfacts, {.v = (float[]){ INC(G * -0.1), INC(M * -0.1), INC(S * -0.1) } } }, \
+	{ MOD, XK_z, setfacts, {.v = (float[]){ INC(G * +0.1), INC(M * +0.1), INC(S * +0.1) } } },
+
+/*
+#define TILEKEYS(MOD,G,M,S)						\
 	{ MOD, XK_r, setdirs,  {.v = (int[])  { INC(G * +1),   INC(M * +1),   INC(S * +1) } } }, \
 	{ MOD, XK_h, setfacts, {.v = (float[]){ INC(G * -0.1), INC(M * -0.1), INC(S * -0.1) } } }, \
 	{ MOD, XK_l, setfacts, {.v = (float[]){ INC(G * +0.1), INC(M * +0.1), INC(S * +0.1) } } },
+*/
 
 #define STACKKEYS(MOD,ACTION)				   \
 	{ MOD, XK_j,     ACTION##stack, {.i = INC(+1) } }, \
@@ -106,7 +116,7 @@ enum placement_style placement_style = under_mouse;
 
 static Key keys[] = {
 	/* modifier                     key        function        argument */
-	{ MODKEY_ALT|ShiftMask,         XK_g,      identify_wintitle,   {0} },
+	{ MODKEY|ControlMask|ShiftMask, XK_g,      identify_wintitle,   {0} },
 	{ MODKEY|ShiftMask|ControlMask, XK_s,	   toggle_systray,	{0} }, // madhu 130424
 
 	{ MODKEY|ShiftMask,             XK_p,      spawn,          {.v = dmenucmd } },
@@ -149,17 +159,20 @@ static Key keys[] = {
 	{ MODKEY|ShiftMask|ControlMask, XK_q,      quit,           {0} },
 
 	//toggleopacity
-	{ MODKEY_ALT,                   XK_s,      toggleopacity,  {0}, },
-	{ MODKEY_ALT,                   XK_j,      toggleopacity,  {.f = +0.1}, },
-	{ MODKEY_ALT,                   XK_k,      toggleopacity,  {.f = -0.1}, },
+	{ MODKEY|ShiftMask|ControlMask, XK_s,      toggleopacity,  {0}, },
+	{ MODKEY|ShiftMask|ControlMask, XK_j,      toggleopacity,  {.f = +0.1}, },
+	{ MODKEY|ShiftMask|ControlMask, XK_k,      toggleopacity,  {.f = -0.1}, },
 
 	//xtile
 	TILEKEYS(MODKEY_ALT,                                       1, 0, 0)
 	TILEKEYS(MODKEY_ALT|ShiftMask,                             0, 1, 0)
 	TILEKEYS(MODKEY_ALT|ControlMask,                           0, 0, 1)
 	TILEKEYS(MODKEY_ALT|ShiftMask|ControlMask,                 1, 1, 1)
-	{ MODKEY_ALT|ShiftMask,         XK_t,      setdirs,        {.v = (int[]){ DirHor, DirVer, DirVer } } },
-	{ MODKEY_ALT|ControlMask,       XK_t,      setdirs,        {.v = (int[]){ DirVer, DirHor, DirHor } } },
+//	{ MODKEY_ALT|ShiftMask,         XK_t,      setdirs,        {.v = (int[]){ DirHor, DirVer, DirVer } } },
+//	{ MODKEY_ALT|ControlMask,       XK_t,      setdirs,        {.v = (int[]){ DirVer, DirHor, DirHor } } },
+
+	{ MODKEY_ALT|ShiftMask,         XK_v,      setdirs,        {.v = (int[]){ DirHor, DirVer, DirVer } } },
+	{ MODKEY_ALT|ControlMask,       XK_v,      setdirs,        {.v = (int[]){ DirVer, DirHor, DirHor } } },
 
 	//stacker
 	STACKKEYS(MODKEY,                          focus)
@@ -170,10 +183,10 @@ static Key keys[] = {
 	{ MODKEY|ShiftMask,             XK_r,	   toggle_resizehints, {0}}, // madhu 080917
 	{ MODKEY|ShiftMask|ControlMask, XK_r,	   toggle_fixed,   {0}}, // madhu 120923
 	{ MODKEY|ShiftMask,             XK_w,      windowlist,     {0} }, // madhu 130402
-	{ MODKEY_ALT|ShiftMask,         XK_f,      myfocus,        {0} }, // madhu 090403
+	{ MODKEY|ShiftMask|ControlMask, XK_f,      myfocus,        {0} }, // madhu 090403
 	{ MODKEY|ShiftMask,             XK_u,      focusurgent,    {0} }, //madhu 170621
-	{ MODKEY_ALT,			XK_w,	   mywarp,	   {0} }, // madhu 170814
-	{ MODKEY_ALT,			XK_p,	   toggle_placement_style, {0} }, //madhu 180601
+	{ MODKEY|ShiftMask|ControlMask, XK_w,	   mywarp,	   {0} }, // madhu 170814
+	{ MODKEY|ShiftMask|ControlMask,	XK_p,	   toggle_placement_style, {0} }, //madhu 180601
 };
 
 /* button definitions */
