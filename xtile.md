@@ -57,6 +57,16 @@ Each of the modifiers then combines with each of the following keys up to a tota
  `h`    |  Decrement fact by 10%.
  `l`    |  Increment fact by 10%.
 
+
+;madhu 190410 - r h l replaced by a z l
+
+;madhu 191128 - n_non_master_columns defaults to 2. This confuses the
+user when you have 3 windows with 1 master and 2 windows in columns.
+Mod-Ctrl-Shift-i increases n_non_master_columns
+Mod-Ctrl-Shift-d increases n_non_master_columns (when this is one the
+output is more familiar)
+
+
 There are two provided default "presets" or "schemas" also:
 
   Modifier        |  Key   |  Preset
