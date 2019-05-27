@@ -35,6 +35,11 @@ simply `MODKEY` for the `focus*` family and `MODKEY|ShiftMask` for the `push*` f
   \`    |   `PREVSEL` |  Previously selected
   `j`   |   `INC(+1)` |  Next to selected
   `k`   |   `INC(-1)` |  Previous to selected
+
+### OBSOLETE SECTION
+
+Key   |  Argument   |   Description
+:------:|:-----------:|-----------------------
   `q`   |     `0`     |  First position
   `a`   |     `1`     |  Second position
   `z`   |     `2`     |  Third position
