@@ -231,6 +231,7 @@ static void focusclienttaskbar(const Arg *arg);
 static void focusin(XEvent *e);
 static void focusmon(const Arg *arg);
 static void focusstack(const Arg *arg);
+static void focusstack_f(const Arg *arg);
 static Atom getatomprop(Client *c, Atom prop);
 static int getcardprop(Client *c, Atom prop);
 static pid_t getparentprocess(pid_t p);
@@ -1315,6 +1316,23 @@ focusstack(const Arg *arg)
 	focus(c ? c : p);
 	restack(selmon);
 #undef Y_ISVISIBLE
+}
+
+void
+focusstack_f(const Arg *arg) // nth previous selection
+{
+	int i = arg->i;
+	Client *c, *p;
+	if (!selmon->clients)
+		return;
+	if (ISINC(i) || (i < 1)) {
+		fprintf(stderr, "focusstack_f bad arg %d\n", i);
+		return;
+	}
+	for (p = NULL, c = selmon->stack; c && (i || !ISVISIBLE(c));
+	     i -= ISVISIBLE(c) ? 1 : 0, p = c, c = c->snext);
+	focus(c ? c : p);
+	restack(selmon);
 }
 
 Atom
