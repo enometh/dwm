@@ -96,13 +96,15 @@ static const Layout layouts[] = {
 	{ MOD, XK_j,     ACTION##stack, {.i = INC(+1) } }, \
 	{ MOD, XK_k,     ACTION##stack, {.i = INC(-1) } }, \
 	{ MOD, XK_grave, ACTION##stack, {.i = PREVSEL } }, \
-	{ MOD, XK_F1,    ACTION##stack, {.i = 0 } }, \
-	{ MOD, XK_F2,    ACTION##stack, {.i = 1 } }, \
-	{ MOD, XK_F3,    ACTION##stack, {.i = 2 } }, \
-	{ MOD, XK_F4,    ACTION##stack, {.i = 3 } }, \
-	{ MOD, XK_F5,    ACTION##stack, {.i = 4 } }, \
-	{ MOD, XK_F6,    ACTION##stack, {.i = 5 } }, \
-	{ MOD | ShiftMask, XK_F1,     ACTION##stack, {.i = -1 } },
+
+#define STACKKEYS_F(MOD,ACTION) \
+	{ MOD, XK_F1,    ACTION##stack_f, {.i = 1 } }, \
+	{ MOD, XK_F2,    ACTION##stack_f, {.i = 2 } }, \
+	{ MOD, XK_F3,    ACTION##stack_f, {.i = 3 } }, \
+	{ MOD, XK_F4,    ACTION##stack_f, {.i = 4 } }, \
+	{ MOD, XK_F5,    ACTION##stack_f, {.i = 5 } }, \
+	{ MOD, XK_F6,    ACTION##stack_f, {.i = 6 } },
+
 
 /* helper for spawning shell commands in the pre dwm-5.0 fashion */
 #define SHCMD(cmd) { .v = (const char*[]){ "/bin/sh", "-c", cmd, NULL } }
@@ -176,6 +178,7 @@ static const Key keys[] = {
 
 	//stacker
 	STACKKEYS(MODKEY,                          focus)
+	STACKKEYS_F(MODKEY,                        focus)
 	STACKKEYS(MODKEY|ShiftMask,                push)
 
 	{ MODKEY|ShiftMask,             XK_e,      cycle_layouts,  {0}, }, // madhu 101213
