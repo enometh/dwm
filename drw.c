@@ -135,6 +135,19 @@ xfont_create(Drw *drw, const char *fontname, FcPattern *fontpattern)
 	} else {
 		die("no font specified.");
 	}
+	/*
+	 * Subject: Re: [hackers] Re: [libsl][PATCH] Workaround Xft BadLength X error
+	 * Date: Sun, 17 Feb 2019 12:44:00 +0000
+	 * Message-ID: <1550406610.onuvmiekl8.astroid@slim.none>
+	 * From: Thomas Spurden
+	 */
+       FT_Face face = XftLockFace(xfont);
+       if(face->face_flags & FT_FACE_FLAG_COLOR) {
+	       XftUnlockFace(xfont);
+	       XftFontClose(drw->dpy, xfont);
+	       return NULL;
+       }
+       XftUnlockFace(xfont);
 
 	/* Do not allow using color fonts. This is a workaround for a BadLength
 	 * error from Xft with color glyphs. Modelled on the Xterm workaround. See
