@@ -3401,9 +3401,11 @@ zoom(const Arg *arg)
 {
 	Client *c = selmon->sel;
 
+#if 0
 	if (!selmon->lt[selmon->sellt]->arrange
 	|| (selmon->sel && selmon->sel->isfloating))
 		return;
+#endif
 	if (c == nexttiled(selmon->clients))
 		if (!c || !(c = nexttiled(c->next)))
 			return;
