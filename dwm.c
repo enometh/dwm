@@ -86,6 +86,7 @@ enum { NetSupported, NetWMName, NetWMState, NetWMCheck,
        NetWMFullscreen, NetActiveWindow, NetWMWindowType,
        NetWMWindowTypeDock,
        NetWMWindowOpacity,
+       NetWMWindowTypeDesktop,
        NetWMWindowTypeDialog, NetClientList,
        NetWMPid,
        NetDesktopNames, NetNumberOfDesktops,
@@ -130,7 +131,7 @@ struct Client {
 	int basew, baseh, incw, inch, maxw, maxh, minw, minh, hintsvalid;
 	int bw, oldbw;
 	unsigned int tags;
-	int isfixed, isfloating, isurgent, neverfocus, oldstate, isfullscreen, isterminal, noswallow;
+	int isfixed, isfloating, isurgent, neverfocus, oldstate, isfullscreen, isterminal, noswallow, isdesktop;
 	pid_t pid;
 	Client *next;
 	Client *snext;
@@ -909,7 +910,7 @@ clientmessage(XEvent *e)
 				const Arg a = {.ui = 1 << i};
 				view(&a);
 				focus(c);
-				XRaiseWindow(dpy,c->win);
+				if (!c->isdesktop) XRaiseWindow(dpy, c->win);
 				restack(selmon);
 				//WARP(c);
 			}
@@ -1315,7 +1316,7 @@ focusclienttaskbar(const Arg *arg)
     for (c = selmon->clients; c; c = c->next)
 		if (ISVISIBLE(c) && --ncc < 0) {
 		focus(c);
-		XRaiseWindow(dpy,c->win);
+		if (!c->isdesktop) XRaiseWindow(dpy, c->win);
 		restack(selmon);
 			break;
 		}
@@ -1665,7 +1666,7 @@ manage(Window w, XWindowAttributes *wa)
 	if (!c->isfloating)
 		c->isfloating = c->oldstate = trans != None || c->isfixed;
 	if (c->isfloating)
-		XRaiseWindow(dpy, c->win);
+		if (!c->isdesktop) XRaiseWindow(dpy, c->win);
 	attach(c);
 	attachstack(c);
 	XChangeProperty(dpy, root, netatom[NetClientList], XA_WINDOW, 32, PropModeAppend,
@@ -1900,6 +1901,7 @@ quit(const Arg *arg) {
 	running = 0;
 }
 
+
 Monitor *
 recttomon(int x, int y, int w, int h)
 {
@@ -2048,7 +2050,7 @@ restack(Monitor *m)
 	if (!m->sel)
 		return;
 	if (m->sel->isfloating || !m->lt[m->sellt]->arrange)
-		XRaiseWindow(dpy, m->sel->win);
+		if (!m->sel->isdesktop) XRaiseWindow(dpy, m->sel->win);
 	if (m->lt[m->sellt]->arrange) {
 		wc.stack_mode = Below;
 		wc.sibling = m->barwin;
@@ -2228,7 +2230,7 @@ setfullscreen(Client *c, int fullscreen)
 		c->bw = 0;
 		c->isfloating = 1;
 		resizeclient(c, c->mon->mx, c->mon->my, c->mon->mw, c->mon->mh);
-		XRaiseWindow(dpy, c->win);
+		if (!c->isdesktop) XRaiseWindow(dpy, c->win);
 	} else if (!fullscreen && c->isfullscreen){
 //		XChangeProperty(dpy, c->win, netatom[NetWMState], XA_ATOM, 32,
 //			PropModeReplace, (unsigned char*)0, 0);
@@ -2352,6 +2354,7 @@ setup(void)
 	netatom[NetWMWindowType] = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE", False);
 	netatom[NetWMWindowTypeDock] = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE_DOCK", False);
 	netatom[NetWMWindowTypeDialog] = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE_DIALOG", False);
+	netatom[NetWMWindowTypeDesktop] = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE_DESKTOP", False);
 	netatom[NetClientList] = XInternAtom(dpy, "_NET_CLIENT_LIST", False);
 	netatom[NetWMPid] = XInternAtom(dpy, "_NET_WM_PID", False);
 	netatom[NetDesktopNames] = XInternAtom(dpy, "_NET_DESKTOP_NAMES", False);
@@ -3213,6 +3216,14 @@ updatewindowtype(Client *c)
 		setfullscreen(c, 1);
 	if (wtype == netatom[NetWMWindowTypeDialog])
 		c->isfloating = 1;
+	else if (wtype == netatom[NetWMWindowTypeDesktop]) {
+		c->isdesktop = c->isfloating = c->isfixed = 1;
+		// put the "desktop window" on all "desktops"
+		int x = -1;
+		XChangeProperty(dpy, c->win, netatom[NetWMDesktop],
+				XA_CARDINAL, 32, PropModeReplace,
+				(unsigned char *) &x, 1);
+	}
 }
 
 void
