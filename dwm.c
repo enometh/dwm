@@ -241,6 +241,7 @@ static unsigned int getsystraywidth();
 static int gettextprop(Window w, Atom atom, char *text, unsigned int size);
 static void grabbuttons(Client *c, int focused);
 static void grabkeys(void);
+static void icccm2_setup(int replace_wm);
 static void incnmaster(const Arg *arg);
 static void incnstackcols(const Arg *arg);
 static int isdescprocess(pid_t p, pid_t c);
@@ -267,6 +268,7 @@ static void resizerequest(XEvent *e);
 static void restack(Monitor *m);
 static void run(void);
 static void scan(void);
+static void selectionclear(XEvent *e);
 static Bool sendevent(Window w, Atom proto, int m, long d0, long d1, long d2, long d3, long d4);
 static void sendmon(Client *c, Monitor *m);
 static void set_net_current_desktop();
@@ -347,6 +349,7 @@ static void (*handler[LASTEvent]) (XEvent *) = {
 	[MotionNotify] = motionnotify,
 	[PropertyNotify] = propertynotify,
 	[ResizeRequest] = resizerequest,
+	[SelectionClear] = selectionclear,
 	[UnmapNotify] = unmapnotify
 };
 static Atom wmatom[WMLast], netatom[NetLast], dwmatom[DWMLast], xatom[XLast];
@@ -364,6 +367,8 @@ static int useargb = 0;
 static Visual *visual;
 static int depth;
 static Colormap cmap;
+
+static int replace_wm = 0;
 
 /* configuration, allows nested code to access above variables */
 #include "config.h"
@@ -790,6 +795,9 @@ cleanup(void)
 	for (i = 0; i < LENGTH(colors); i++)
 		free(scheme[i]);
 	free(scheme);
+	// make sure we release SubstructureRedirect so that another
+	// wm can start successfully.
+	XSelectInput(dpy, DefaultRootWindow(dpy), NoEventMask);
 	XDestroyWindow(dpy, wmcheckwin);
 	drw_free(drw);
 	if (showsystray) {
@@ -2372,6 +2380,10 @@ setup(void)
 	updatestatus();
 	/* supporting window for NetWMCheck */
 	wmcheckwin = XCreateSimpleWindow(dpy, root, 0, 0, 1, 1, 0, 0, 0);
+
+	icccm2_setup(replace_wm);
+	checkotherwm();		/* bogus (if there is an iccm2 wm!) */
+
 	XChangeProperty(dpy, wmcheckwin, netatom[NetWMCheck], XA_WINDOW, 32,
 		PropModeReplace, (unsigned char *) &wmcheckwin, 1);
 	XChangeProperty(dpy, wmcheckwin, netatom[NetWMName], utf8string, 8,
@@ -3454,13 +3466,15 @@ main(int argc, char *argv[])
 {
 	if (argc == 2 && !strcmp("-v", argv[1]))
 		die("dwm-"VERSION);
+	else if (argc == 2 && !strcmp("-r", argv[1]))
+		replace_wm = 1;
 	else if (argc != 1)
-		die("usage: dwm [-v]");
+		die("usage: dwm [-vr] ");
 	if (!setlocale(LC_CTYPE, "") || !XSupportsLocale())
 		fputs("warning: no locale support\n", stderr);
 	if (!(dpy = XOpenDisplay(NULL)))
 		die("dwm: cannot open display");
-	checkotherwm();
+	//checkotherwm(); runs too early. run it in setup
 	setup();
 #ifdef __OpenBSD__
 	if (pledge("stdio rpath proc exec", NULL) == -1)
@@ -3471,4 +3485,115 @@ main(int argc, char *argv[])
 	cleanup();
 	XCloseDisplay(dpy);
 	return EXIT_SUCCESS;
+}
+
+/* Returns the current X server time */
+static Time
+get_server_time(void)
+{
+	XEvent xev;
+	XSetWindowAttributes attr;
+	Window screen_support_win = wmcheckwin;
+
+	/* add PropChange to NoFocusWin events */
+	attr.event_mask = PropertyChangeMask;
+	XChangeWindowAttributes (dpy, screen_support_win, CWEventMask, &attr);
+
+	/* provoke an event */
+	XChangeProperty(
+		dpy, screen_support_win, XA_WM_CLASS, XA_STRING, 8, PropModeAppend,
+		NULL, 0);
+
+	XWindowEvent(dpy, screen_support_win, PropertyChangeMask, &xev);
+	Last_Event_Time = xev.xproperty.time;
+
+	/* restore NoFocusWin event mask */
+	attr.event_mask = (KeyPressMask | KeyReleaseMask | FocusChangeMask);
+	XChangeWindowAttributes(dpy, screen_support_win, CWEventMask, &attr);
+	return xev.xproperty.time;
+}
+
+static void
+icccm2_setup(int replace_wm)
+{
+	Window running_wm_win;
+	XSetWindowAttributes attr;
+	XEvent xev;
+	XClientMessageEvent ev;
+	char wm_sx[20];
+	Atom _XA_WM_SX;
+	Window screen_support_win = wmcheckwin;
+
+	sprintf(wm_sx, "WM_S%u", screen);
+	_XA_WM_SX = XInternAtom(dpy, wm_sx, False);
+
+	/* Check for a running ICCCM 2.0 compliant WM */
+	running_wm_win = XGetSelectionOwner(dpy, _XA_WM_SX);
+	if (running_wm_win == screen_support_win)
+		running_wm_win = None;
+	if (running_wm_win != None)
+	{
+		if (!replace_wm)
+		{
+			fprintf(stderr, "icccm2_setup: another ICCCM 2.0 compliant WM is running. Try -r\n");
+			exit(1);
+		}
+		/* We need to know when the old manager is gone. */
+		attr.event_mask = StructureNotifyMask;
+		XChangeWindowAttributes(
+			dpy, running_wm_win, CWEventMask, &attr);
+	}
+
+	/* Have to get a timestamp manually by provoking a
+	 * PropertyNotify. */
+	Time managing_since = get_server_time();
+
+	XSetSelectionOwner(dpy, _XA_WM_SX, screen_support_win, managing_since);
+	if (XGetSelectionOwner(dpy, _XA_WM_SX) != screen_support_win)
+	{
+		fprintf(stderr,  "icccm2_setup failed to acquire selection ownership on screen %d", screen);
+		exit(1);
+	}
+
+	/* Wait for the old wm to finish. */
+	if (running_wm_win != None) {
+		ulong wait = 0;
+		ulong timeout = 1000000 * 15;  /* wait for 15s max */
+		fprintf(stderr, "icccm2_setup waiting for WM to give up...");
+		do {
+			if (XCheckWindowEvent(dpy, running_wm_win, StructureNotifyMask, &xev))
+				if (xev.type == DestroyNotify && xev.xany.window == running_wm_win) {
+					fprintf(stderr, "done! after %lu microseconds", wait);
+					break;
+				}
+			usleep(1000000 / 10);
+			wait += 1000000 / 10;
+		} while (wait < timeout);
+
+		if (wait >= timeout) {
+			fprintf(stderr, "The WM on screen %d is not exiting\n", screen);
+			exit(0);
+		}
+	}
+
+	/* Announce ourself as the new wm: */
+	ev.type = ClientMessage;
+	ev.window = DefaultRootWindow(dpy);
+	ev.message_type = xatom[Manager];
+	ev.format = 32;
+	ev.data.l[0] = managing_since;
+	ev.data.l[1] = _XA_WM_SX;
+	XSendEvent(dpy, DefaultRootWindow(dpy), False, StructureNotifyMask,(XEvent*)&ev);
+}
+
+static void
+selectionclear(XEvent *e)
+{
+	if ((e->xany).window == wmcheckwin) {
+		fprintf(stderr, "icccm2_close: good luck, new wm\n");
+		// cleanup() handles icccm2_close when it releases
+		running = 0;
+	} else
+		fprintf(stderr, "ignoring selection clear event on window %lx selection %lx\n",
+			(e->xany).window, ((XSelectionClearEvent *)e)->selection);
 }
