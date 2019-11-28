@@ -3128,8 +3128,14 @@ updatewindowtype(Client *c)
 		setfullscreen(c, 1);
 	if (wtype == netatom[NetWMWindowTypeDialog])
 		c->isfloating = 1;
-	else if (wtype == netatom[NetWMWindowTypeDesktop])
-		c->isdesktop = c->isfloating c->isfixed = 1;
+	else if (wtype == netatom[NetWMWindowTypeDesktop]) {
+		c->isdesktop = c->isfloating = c->isfixed = 1;
+		// put the "desktop window" on all "desktops"
+		int x = -1;
+		XChangeProperty(dpy, c->win, netatom[NetWMDesktop],
+				XA_CARDINAL, 32, PropModeReplace,
+				(unsigned char *) &x, 1);
+	}
 }
 
 void
