@@ -56,7 +56,7 @@ static const int n_non_master_columns = 2;
 static       int resizehints = 1;    /* 1 means respect size hints in tiled resizals */
 
 #include "gaplessgrid.c"
-
+#include "tatami.c"
 
 static const Layout layouts[] = {
 	/* symbol     arrange function */
@@ -64,6 +64,7 @@ static const Layout layouts[] = {
 	{ "[]=",      tile },    /* first entry is default */
 	{ "[M]",      monocle },
 	{ "[G]",      gaplessgrid },
+	{ "|+|",      tatami },
 };
 
 #include "patch-madhu.c"
@@ -138,6 +139,7 @@ static Key keys[] = {
 	{ MODKEY|ShiftMask,             XK_f,      setlayout,      {.v = &layouts[1]} },
 	{ MODKEY|ShiftMask,             XK_m,      setlayout,      {.v = &layouts[2]} },
 	{ MODKEY|ShiftMask,             XK_g,      setlayout,      {.v = &layouts[3]} },
+	{ MODKEY|ShifMask,              XK_y,      setlayout,      {.v = &layouts[4]} }, /* tatami */
 	{ MODKEY|ShiftMask,             XK_space,  setlayout,      {0} },
 	{ MODKEY|ShiftMask|ControlMask, XK_space,  togglefloating, {0} },
 	{ MODKEY,                       XK_0,      view,           {.ui = ~0 } },
