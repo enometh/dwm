@@ -57,7 +57,7 @@ static       int resizehints = 1;    /* 1 means respect size hints in tiled resi
 static const int lockfullscreen = 1; /* 1 will force focus on the fullscreen window */
 
 #include "gaplessgrid.c"
-
+#include "tatami.c"
 
 static const Layout layouts[] = {
 	/* symbol     arrange function */
@@ -65,6 +65,7 @@ static const Layout layouts[] = {
 	{ "[]=",      tile },    /* first entry is default */
 	{ "[M]",      monocle },
 	{ "[G]",      gaplessgrid },
+	{ "|+|",      tatami },
 };
 
 #include "patch-madhu.c"
@@ -139,6 +140,7 @@ static const Key keys[] = {
 	{ MODKEY|ShiftMask,             XK_f,      setlayout,      {.v = &layouts[1]} },
 	{ MODKEY|ShiftMask,             XK_m,      setlayout,      {.v = &layouts[2]} },
 	{ MODKEY|ShiftMask,             XK_g,      setlayout,      {.v = &layouts[3]} },
+	{ MODKEY|ShiftMask,              XK_y,      setlayout,      {.v = &layouts[4]} }, /* tatami */
 	{ MODKEY|ShiftMask,             XK_space,  setlayout,      {0} },
 	{ MODKEY|ShiftMask|ControlMask, XK_space,  togglefloating, {0} },
 	{ MODKEY,                       XK_0,      view,           {.ui = ~0 } },
