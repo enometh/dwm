@@ -3509,7 +3509,7 @@ icccm2_setup(int replace_wm)
 		do {
 			if (XCheckWindowEvent(dpy, running_wm_win, StructureNotifyMask, &xev))
 				if (xev.type == DestroyNotify && xev.xany.window == running_wm_win) {
-					fprintf(stderr, "done! after %ul microseconds", wait);
+					fprintf(stderr, "done! after %lu microseconds", wait);
 					break;
 				}
 			usleep(1000000 / 10);
@@ -3535,7 +3535,11 @@ icccm2_setup(int replace_wm)
 static void
 selectionclear(XEvent *e)
 {
-	fprintf(stderr, "icccm2_close: good luck, new wm\n");
-	// cleanup() handles icccm2_close when it releases
-	running = 0;
+	if ((e->xany).window == wmcheckwin) {
+		fprintf(stderr, "icccm2_close: good luck, new wm\n");
+		// cleanup() handles icccm2_close when it releases
+		running = 0;
+	} else
+		fprintf(stderr, "ignoring selection clear event on window %lx selection %lx\n",
+			(e->xany).window, ((XSelectionClearEvent *)e)->selection);
 }
