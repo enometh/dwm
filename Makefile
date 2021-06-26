@@ -52,3 +52,6 @@ uninstall:
 
 rules.fragment:
 	touch rules.fragment
+
+dmenu_run: dmenu_run_pinnochio.c
+	gcc -o $@ $?
