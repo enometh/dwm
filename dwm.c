@@ -3383,7 +3383,7 @@ xinitvisual()
 	visual = NULL;
 	for(i = 0; i < nitems; i ++) {
 		fmt = XRenderFindVisualFormat(dpy, infos[i].visual);
-		if (fmt->type == PictTypeDirect && fmt->direct.alphaMask) {
+		if (fmt && fmt->type == PictTypeDirect && fmt->direct.alphaMask) {
 			visual = infos[i].visual;
 			depth = infos[i].depth;
 			cmap = XCreateColormap(dpy, root, visual, AllocNone);
