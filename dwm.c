@@ -230,6 +230,7 @@ static void focusin(XEvent *e);
 static void focusmon(const Arg *arg);
 static void focusstack(const Arg *arg);
 static Atom getatomprop(Client *c, Atom prop);
+static Client *getclientundermouse(void);
 static int getcardprop(Client *c, Atom prop);
 static pid_t getparentprocess(pid_t p);
 static int getrootptr(int *x, int *y);
@@ -1417,6 +1418,20 @@ getcardprop(Client *c, Atom prop)
 		result = *p;
 	XFree(p);
 	return result;
+}
+
+Client *
+getclientundermouse(void)
+{
+	int ret, di;
+	unsigned int dui;
+	Window child, dummy;
+
+	ret = XQueryPointer(dpy, root, &dummy, &child, &di, &di, &di, &di, &dui);
+	if (!ret)
+		return NULL;
+
+	return wintoclient(child);
 }
 
 unsigned int
@@ -2851,7 +2866,7 @@ unmanage(Client *c, int destroyed)
 		free(s->swallowing);
 		s->swallowing = NULL;
 		arrange(m);
-        focus(NULL);
+        focus(getclientundermouse());
 		return;
 	}
 
@@ -2874,7 +2889,7 @@ unmanage(Client *c, int destroyed)
 
 	if (!s) {
 		arrange(m);
-		focus(NULL);
+		focus(getclientundermouse());
 		updateclientlist();
 	}
 }
