@@ -31,7 +31,7 @@ myfocus(const Arg *arg) {
 	Client *c;
 	if (!(c=selmon->sel)) {
 		fprintf(stderr,"myfocus(NULL): failed\n");
-	} else {
+	} else if (raise_on_click) {
 		c->raiseme = 1;
 		restack(selmon);
 	}
@@ -233,4 +233,11 @@ toggle_placement_style(const Arg *arg)
     placement_style = under_mouse;
   else if (placement_style == under_mouse)
     placement_style = centered;
+}
+
+
+static void
+toggle_raise_on_click(const Arg *arg)
+{
+  raise_on_click = !raise_on_click;
 }
