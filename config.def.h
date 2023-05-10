@@ -72,6 +72,8 @@ static const Layout layouts[] = {
 	{ "|+|",      tatami },
 };
 
+static int raise_on_click = 1; //madhu 230510
+
 #include "patch-madhu.c"
 
 /* key definitions */
@@ -193,6 +195,7 @@ static const Key keys[] = {
 	{ MODKEY|ShiftMask,             XK_u,      focusurgent,    {0} }, //madhu 170621
 	{ MODKEY|ShiftMask|ControlMask, XK_w,	   mywarp,	   {0} }, // madhu 170814
 	{ MODKEY|ShiftMask|ControlMask,	XK_p,	   toggle_placement_style, {0} }, //madhu 180601
+	{ MODKEY|ShiftMask|ControlMask, XK_o,      toggle_raise_on_click, {0} }, //madhu 230510
 };
 
 /* button definitions */
