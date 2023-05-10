@@ -139,6 +139,7 @@ struct Client {
 	Monitor *mon;
 	Window win;
 	double opacity;
+	int raiseme;
 };
 
 typedef struct {
@@ -918,7 +919,7 @@ clientmessage(XEvent *e)
 				const Arg a = {.ui = 1 << i};
 				view(&a);
 				focus(c);
-				if (!c->isdesktop) XRaiseWindow(dpy, c->win);
+				c->raiseme = 1;
 				restack(selmon);
 				//WARP(c);
 			}
@@ -1324,7 +1325,7 @@ focusclienttaskbar(const Arg *arg)
     for (c = selmon->clients; c; c = c->next)
 		if (ISVISIBLE(c) && --ncc < 0) {
 		focus(c);
-		if (!c->isdesktop) XRaiseWindow(dpy, c->win);
+		c->raiseme = 1;
 		restack(selmon);
 			break;
 		}
@@ -2057,8 +2058,10 @@ restack(Monitor *m)
 	drawbar(m);
 	if (!m->sel)
 		return;
-	if (m->sel->isfloating || !m->lt[m->sellt]->arrange)
+	if (m->sel->isfloating || !m->lt[m->sellt]->arrange || m->sel->raiseme) {
 		if (!m->sel->isdesktop) XRaiseWindow(dpy, m->sel->win);
+		if (m->sel->raiseme) m->sel->raiseme = 0;
+	}
 	if (m->lt[m->sellt]->arrange) {
 		wc.stack_mode = Below;
 		wc.sibling = m->barwin;
