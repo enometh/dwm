@@ -31,8 +31,10 @@ myfocus(const Arg *arg) {
 	Client *c;
 	if (!(c=selmon->sel)) {
 		fprintf(stderr,"myfocus(NULL): failed\n");
-	} else
-		if (!c->isdesktop) XRaiseWindow(dpy,c->win);
+	} else {
+		c->raiseme = 1;
+		restack(selmon);
+	}
 	XAllowEvents(dpy,ReplayPointer,CurrentTime);
 	XAllowEvents(dpy, AsyncKeyboard, CurrentTime);
 }
