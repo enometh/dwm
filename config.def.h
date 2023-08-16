@@ -118,12 +118,14 @@ static const char *termcmd[]  = { "xterm", NULL };
 
 enum placement_style placement_style = under_mouse;
 
+static const char *roficmd[] = { "/usr/bin/rofi", "-show", "window", "-nb", "#2b4e5e", NULL };
+
 static const Key keys[] = {
 	/* modifier                     key        function        argument */
 	{ MODKEY|ControlMask|ShiftMask, XK_g,      identify_wintitle,   {0} },
 	{ MODKEY|ShiftMask|ControlMask, XK_s,	   toggle_systray,	{0} }, // madhu 130424
 
-	{ MODKEY|ShiftMask,             XK_p,      spawn,          {.v = dmenucmd } },
+	{ MODKEY,		        XK_p,      spawn,          {.v = dmenucmd } },
 	{ MODKEY|ShiftMask,             XK_Return, spawn,          {.v = termcmd } },
 	{ MODKEY|ShiftMask,             XK_b,      togglebar,      {0} },
 //stack	{ MODKEY,                       XK_j,      focusstack,     {.i = +1 } },
@@ -193,6 +195,9 @@ static const Key keys[] = {
 	{ MODKEY|ShiftMask|ControlMask, XK_w,	   mywarp,	   {0} }, // madhu 170814
 	{ MODKEY|ShiftMask|ControlMask,	XK_p,	   toggle_placement_style, {0} }, //madhu 180601
 	{ MODKEY|ShiftMask|ControlMask, XK_o,      toggle_raise_on_click, {0} }, //madhu 230510
+
+	{ MODKEY,			XK_w,	   spawn,	   {.v = roficmd} }, // madhu 230816
+
 };
 
 /* button definitions */
