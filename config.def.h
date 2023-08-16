@@ -116,13 +116,16 @@ static const char *termcmd[]  = { "xterm", NULL };
 
 enum placement_style placement_style = under_mouse;
 
+static const char *roficmd[] = { "/usr/bin/rofi", "-show", "window", "-nb", "#2b4e5e", NULL };
+
 static const Key keys[] = {
 	/* modifier                     key        function        argument */
 	{ MODKEY_ALT|ControlMask|ShiftMask, XK_g,  identify_wintitle,   {0} },
 	{ MODKEY|ShiftMask|ControlMask, XK_s,	   toggle_systray,	{0} }, // madhu 130424
 
-	{ MODKEY|ShiftMask,             XK_p,      spawn,          {.v = dmenucmd } },
+	{ MODKEY|ShiftMask,	        XK_p,      spawn,          {.v = dmenucmd } },
 	{ MODKEY|ShiftMask,             XK_Return, spawn,          {.v = termcmd } },
+	{ MODKEY|ShiftMask,		XK_w,	   spawn,	   {.v = roficmd} }, // madhu 230816
 	{ MODKEY|ShiftMask,             XK_b,      togglebar,      {0} },
 //stack	{ MODKEY,                       XK_j,      focusstack,     {.i = +1 } },
 //stack	{ MODKEY,                       XK_k,      focusstack,     {.i = -1 } },
@@ -185,7 +188,7 @@ static const Key keys[] = {
 	{ MODKEY|ShiftMask,		XK_q,	   startwm,	   {.v = "exec dwm < /dev/null" } }, // madhu 070530
 	{ MODKEY|ShiftMask,             XK_r,	   toggle_resizehints, {0}}, // madhu 080917
 	{ MODKEY|ShiftMask|ControlMask, XK_r,	   toggle_fixed,   {0}}, // madhu 120923
-	{ MODKEY|ShiftMask,             XK_w,      windowlist,     {0} }, // madhu 130402
+	{ Mod4Mask|ControlMask,         XK_w,      windowlist,     {0} }, // madhu 130402
 	{ MODKEY_ALT|ShiftMask|ControlMask, XK_f,  myfocus,        {0} }, // madhu 090403
 	{ MODKEY|ShiftMask|ControlMask, XK_u,      unswallow_now,   {0} }, //;madhu 231223
 	{ MODKEY|ShiftMask,             XK_u,      focusurgent,    {0} }, //madhu 170621
