@@ -290,6 +290,7 @@ static void tagmon(const Arg *arg);
 static Client *termforwin(const Client *c);
 static void tile(Monitor *m);
 static void togglebar(const Arg *arg);
+static void togglelosefocus(const Arg *arg);
 static void togglefloating(const Arg *arg);
 static void toggletag(const Arg *arg);
 static void toggleview(const Arg *arg);
@@ -1193,7 +1194,7 @@ drawbar(Monitor *m)
 
 	if ((w = (n > 0) ? (m->ww - tw - x)/n : (m->ww - tw - x)) > bh) {
 		stx = m->ww - tw;
-		if (m->sel) {
+		if (m->sel  || (lose_focus && n != 0)) {
 			for (c = m->clients, i = 1; c; c = c->next) {
 				if (ISVISIBLE(c)) {
 					drw_setscheme(drw, scheme[c == selmon->sel ? SchemeSel : SchemeNorm]);
@@ -1239,6 +1240,7 @@ enternotify(XEvent *e)
 	if (m != selmon) {
 		unfocus(selmon->sel, 1);
 		selmon = m;
+	} if (lose_focus && !c) {
 	} else if (!c || c == selmon->sel)
 		return;
 	focus(c);
@@ -1268,6 +1270,8 @@ window_opacity_set(Client *c, double opacity)
 void
 focus(Client *c)
 {
+	if (lose_focus && !c) goto skip_choose;
+
 	if (!c || !ISVISIBLE(c))
 		// first restrict search to clients which were not
 		// visible in the previous view.
@@ -1281,7 +1285,7 @@ focus(Client *c)
 		// current view
 		for (c = selmon->stack; c && !ISVISIBLE(c); c = c->snext);
 
-
+skip_choose:
 	if (selmon->sel && selmon->sel != c) {
 		unfocus(selmon->sel, 0);
 		float o = selmon->sel->opacity;
@@ -2259,7 +2263,7 @@ setlayout(const Arg *arg)
 		selmon->pertag->ltidxs[selmon->pertag->curtag][selmon->sellt] = (Layout *)arg->v;
 	selmon->lt[selmon->sellt] = selmon->pertag->ltidxs[selmon->pertag->curtag][selmon->sellt];
 	strncpy(selmon->ltsymbol, selmon->lt[selmon->sellt]->symbol, sizeof selmon->ltsymbol);
-	if (selmon->sel)
+	if (selmon->sel || (lose_focus && selmon->clients)) // lose_focus: loose
 		arrange(selmon);
 	else
 		drawbar(selmon);
@@ -2522,7 +2526,7 @@ stackpos(const Arg *arg, int excludep) {
 		return i;
 	}
 	else if (ISINC(arg->i)) {
-		if (!selmon->sel)
+		if (!lose_focus && !selmon->sel)
 			return -1;
 		for (i = 0, c = selmon->clients; c != selmon->sel; i += Y_ISVISIBLE(c) ? 1 : 0, c = c->next);
 		for (n = i; c; n += Y_ISVISIBLE(c) ? 1 : 0, c = c->next);
@@ -2708,6 +2712,12 @@ togglebar(const Arg *arg)
 		XConfigureWindow(dpy, systray->win, CWY, &wc);
 	}
 	arrange(selmon);
+}
+
+void
+togglelosefocus(const Arg *arg)
+{
+	lose_focus = !lose_focus;
 }
 
 void
