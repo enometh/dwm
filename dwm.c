@@ -227,6 +227,7 @@ static void drawbar(Monitor *m);
 static void drawbars(void);
 static void enternotify(XEvent *e);
 static void expose(XEvent *e);
+static Client *findbefore(Client *c);
 static void window_opacity_set(Client *c, double opacity);
 static void focus(Client *c);
 static void focusclienttaskbar(const Arg *arg);
@@ -329,6 +330,7 @@ static void setdirs(const Arg *arg);
 static void setfacts(const Arg *arg);
 
 /* variables */
+static Client *prevzoom = NULL;
 static const char broken[] = "broken";
 static char stext[256];
 static int screen;
@@ -1276,6 +1278,16 @@ window_opacity_set(Client *c, double opacity)
 	}
 	else
 		XDeleteProperty(dpy, c->win, netatom[NetWMWindowOpacity]);
+}
+
+Client *
+findbefore(Client *c)
+{
+	Client *tmp;
+	if (c == selmon->clients)
+		return NULL;
+	for (tmp = selmon->clients; tmp && tmp->next != c; tmp = tmp->next);
+	return tmp;
 }
 
 void
@@ -3512,9 +3524,41 @@ zoom(const Arg *arg)
 		return;
 #endif
 	if (!c) return;
+
+	if (!zoom_swap_p) {
 	if (c == nexttiled(selmon->clients) && !(c = nexttiled(c->next)))
 		return;
 	pop(c);
+	} else {
+		Client *at = NULL, *cold, *cprevious = NULL;
+		if (c == nexttiled(selmon->clients)) {
+			at = findbefore(prevzoom);
+			if (at)
+				cprevious = nexttiled(at->next);
+			if (!cprevious || cprevious != prevzoom) {
+				prevzoom = NULL;
+				if (!c || !(c = nexttiled(c->next)))
+					return;
+			} else
+				c = cprevious;
+		}
+		cold = nexttiled(selmon->clients);
+		if (c != cold && !at)
+			at = findbefore(c);
+		detach(c);
+		attach(c);
+		/* swap windows instead of pushing the previous one down */
+		if (c != cold && at) {
+			prevzoom = cold;
+			if (cold && at != cold) {
+				detach(cold);
+				cold->next = at->next;
+				at->next = cold;
+			}
+		}
+		focus(c);
+		arrange(c->mon);
+	}
 }
 
 int
