@@ -527,6 +527,15 @@ attach(Client *c)
 	c->mon->clients = c;
 }
 
+ void
+attachbottom(Client *c)
+{
+	Client **tc;
+	c->next = NULL;
+	for (tc = &c->mon->clients; *tc; tc = &(*tc)->next);
+	*tc = c;
+}
+
 void
 attachstack(Client *c)
 {
@@ -1695,7 +1704,10 @@ manage(Window w, XWindowAttributes *wa)
 		c->isfloating = c->oldstate = trans != None || c->isfixed;
 	if (c->isfloating)
 		if (!c->isdesktop) XRaiseWindow(dpy, c->win);
-	attach(c);
+	if (!attach_bottom_p)
+		attach(c);
+	else
+		attachbottom(c);
 	attachstack(c);
 	XChangeProperty(dpy, root, netatom[NetClientList], XA_WINDOW, 32, PropModeAppend,
 		(unsigned char *) &(c->win), 1);
@@ -2142,7 +2154,10 @@ sendmon(Client *c, Monitor *m)
 	detachstack(c);
 	c->mon = m;
 	c->tags = m->tagset[m->seltags]; /* assign tags of target monitor */
-	attach(c);
+	if (!attach_bottom_p)
+		attach(c);
+	else
+		attachbottom(c);
 	attachstack(c);
 	focus(NULL);
 	arrange(NULL);
