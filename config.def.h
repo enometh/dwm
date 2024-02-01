@@ -58,6 +58,7 @@ static const int lockfullscreen = 1; /* 1 will force focus on the fullscreen win
 static const int refreshrate = 120;  /* refresh rate (per second) for client move/resize */
 static int lose_focus = 0; /* 1 will allow windows to lose focus when the pointer mouses out of the window area */
 static int attach_bottom_p = 1;	/* 1 will make new clients attach at the bottom of the stack instead of the top. */
+static int zoom_swap_p = 1; /* 1 will make zoom swap the current client with master rather than pushing the previous master down the stack */
 
 #include "gaplessgrid.c"
 #include "tatami.c"
@@ -202,6 +203,7 @@ static const Key keys[] = {
 
 	{ MODKEY|ShiftMask,             XK_o,      togglelosefocus, {0} }, //madhu 231016
 	{ MODKEY|ShiftMask|ControlMask, XK_b,      toggle_attach_bottom, {0} }, //;madhu 240201
+	{ MODKEY|ShiftMask|ControlMask, XK_n,      toggle_zoom_swap, {0} }, //;madhu 240201
 };
 
 /* button definitions */

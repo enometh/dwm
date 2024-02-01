@@ -259,3 +259,8 @@ toggle_attach_bottom(const Arg *arg)
 {
   attach_bottom_p = !attach_bottom_p;
 }
+static void
+toggle_zoom_swap(const Arg *arg)
+{
+  zoom_swap_p = !zoom_swap_p;
+}
