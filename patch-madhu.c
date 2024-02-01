@@ -241,3 +241,9 @@ toggle_raise_on_click(const Arg *arg)
 {
   raise_on_click = !raise_on_click;
 }
+
+static void
+toggle_attach_bottom(const Arg *arg)
+{
+  attach_bottom_p = !attach_bottom_p;
+}
