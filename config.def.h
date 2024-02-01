@@ -56,6 +56,7 @@ static const int n_non_master_columns = 2;
 static       int resizehints = 1;    /* 1 means respect size hints in tiled resizals */
 static const int lockfullscreen = 1; /* 1 will force focus on the fullscreen window */
 static int lose_focus = 0; /* 1 will allow windows to lose focus when the pointer mouses out of the window area */
+static int attach_bottom_p = 1;	/* 1 will make new clients attach at the bottom of the stack instead of the top. */
 
 #include "gaplessgrid.c"
 #include "tatami.c"
@@ -199,6 +200,7 @@ static const Key keys[] = {
 	{ MODKEY,			XK_w,	   spawn,	   {.v = roficmd} }, // madhu 230816
 
 	{ MODKEY|ShiftMask,             XK_o,      togglelosefocus, {0} }, //madhu 231016
+	{ MODKEY|ShiftMask|ControlMask, XK_b,      toggle_attach_bottom, {0} }, //;madhu 240201
 };
 
 /* button definitions */
