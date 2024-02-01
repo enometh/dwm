@@ -90,12 +90,24 @@ windowlist(const Arg *arg) {
 	int out[2], nts[2], cpid, i, j;
 	char *argv[] = {"dmenu", "-l", "50", "-i", NULL };
 	FILE *fout;
+#ifdef HAVE_USE_SIGACTION_SIGCHLD
+	struct sigaction sa;
+#endif
 
 	if (pipe(out) == -1) { perror("windowlist: pipe(out)"); return; }
 	if (pipe(nts) == -1) { perror("windowlist: pipe(nts)"); return; }
 	if ((cpid = fork()) == -1) { perror("windowlist: fork()"); return;}
 
 	if (cpid == 0) { // child reads from NTS and writes to OUT
+#ifdef HAVE_USE_SIGACTION_SIGCHLD
+// ;madhu 240201 restoring SIGCHLD handler in child has no effect
+// on the parent.
+		setsid();
+		sigemptyset(&sa.sa_mask);
+		sa.sa_flags = 0;
+		sa.sa_handler = SIG_DFL;
+		sigaction(SIGCHLD, &sa, NULL);
+#endif
 		close(nts[1]);
 		if (dup2(nts[0], STDIN_FILENO) == -1)
 		{fprintf(stderr, "child:dup2(nts[0]=%d,stdin=%d)\n",

@@ -279,6 +279,9 @@ static void settagsprop(Window w, unsigned int tags);
 static void setup(void);
 static void seturgent(Client *c, int urg);
 static void showhide(Client *c);
+#ifndef HAVE_USE_SIGACTION_SIGCHLD
+static void sigchld(int unused);
+#endif
 static void spawn(const Arg *arg);
 static int stackpos(const Arg *arg, int exludetaggedall);
 static Client *swallowingclient(Window w);
@@ -2356,6 +2359,7 @@ setup(void)
 	int i;
 	XSetWindowAttributes wa;
 	Atom utf8string;
+#ifdef HAVE_USE_SIGACTION_SIGCHLD
 	struct sigaction sa;
 
 	/* do not transform children into zombies when they terminate */
@@ -2366,6 +2370,9 @@ setup(void)
 
 	/* clean up any zombies (inherited from .xinitrc etc) immediately */
 	while (waitpid(-1, NULL, WNOHANG) > 0);
+#else
+	sigchld(0);
+#endif
 
 	/* init screen */
 	screen = DefaultScreen(dpy);
@@ -2514,6 +2521,16 @@ showhide(Client *c)
 		XMoveWindow(dpy, c->win, c->x + 2 * sw, c->y);
 	}
 }
+
+#ifndef HAVE_USE_SIGACTION_SIGCHLD
+void
+sigchld(int unused)
+{
+	if (signal(SIGCHLD, sigchld) == SIG_ERR)
+		die("can't install SIGCHLD handler:");
+	while (0 < waitpid(-1, NULL, WNOHANG));
+}
+#endif
 
 void
 spawn(const Arg *arg)
