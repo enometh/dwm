@@ -3565,6 +3565,7 @@ void
 zoom(const Arg *arg)
 {
 	Client *c = selmon->sel;
+	int zoom_swap_p = arg->ui;
 
 #if 0
 	if (!selmon->lt[selmon->sellt]->arrange || !c || c->isfloating)
