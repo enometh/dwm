@@ -3215,6 +3215,12 @@ updatesystrayiconstate(Client *i, XPropertyEvent *ev)
 			systray->win, XEMBED_EMBEDDED_VERSION);
 }
 
+// WTF work around: X Error of failed request:  BadMatch (invalid parameter attributes)
+//  Major opcode of failed request:  70 (X_PolyFillRectangle)
+//  Serial number of failed request:  94
+//  Current serial number in output stream:  95
+
+#define WTF 0
 void
 updatesystray(void)
 {
@@ -3272,12 +3278,16 @@ updatesystray(void)
 	XMoveResizeWindow(dpy, systray->win, x, m->by, w, bh);
 	wc.x = x; wc.y = m->by; wc.width = w; wc.height = bh;
 	wc.stack_mode = Above; wc.sibling = m->barwin;
+#if WTF
 	XConfigureWindow(dpy, systray->win, CWX|CWY|CWWidth|CWHeight|CWSibling|CWStackMode, &wc);
+#endif
 	XMapWindow(dpy, systray->win);
 	XMapSubwindows(dpy, systray->win);
 	/* redraw background */
+#if WTF
 	XSetForeground(dpy, drw->gc, scheme[SchemeNorm][ColBg].pixel);
 	XFillRectangle(dpy, systray->win, drw->gc, 0, 0, w, bh);
+#endif
 	XSync(dpy, False);
 }
 
