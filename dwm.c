@@ -3543,37 +3543,21 @@ xerrorstart(Display *dpy, XErrorEvent *ee)
 void
 xinitvisual()
 {
-	XVisualInfo *infos;
+	XVisualInfo vis;
 	XRenderPictFormat *fmt;
 	int nitems;
 	int i;
 
-	XVisualInfo tpl = {
-		.screen = screen,
-		.depth = 32,
-		.class = TrueColor
-	};
-	long masks = VisualScreenMask | VisualDepthMask | VisualClassMask;
-
-	infos = XGetVisualInfo(dpy, masks, &tpl, &nitems);
-	visual = NULL;
-	for(i = 0; i < nitems; i ++) {
-		fmt = XRenderFindVisualFormat(dpy, infos[i].visual);
-		if (fmt && fmt->type == PictTypeDirect && fmt->direct.alphaMask) {
-			visual = infos[i].visual;
-			depth = infos[i].depth;
-			cmap = XCreateColormap(dpy, root, visual, AllocNone);
-			useargb = 1;
-			break;
-		}
-	}
-
-	XFree(infos);
-
+	XMatchVisualInfo(dpy, screen, 32, TrueColor, &vis);
+	visual = vis.visual;
 	if (! visual) {
 		visual = DefaultVisual(dpy, screen);
 		depth = DefaultDepth(dpy, screen);
 		cmap = DefaultColormap(dpy, screen);
+	} else {
+		depth = vis.depth;
+		cmap =  XCreateColormap(dpy, root, visual, AllocNone);
+		useargb = 1;
 	}
 }
 
