@@ -66,8 +66,10 @@ static const Layout layouts[] = {
 	{ MODKEY|ShiftMask,             KEY,      tag,            {.ui = 1 << TAG} }, \
 	{ MODKEY|ControlMask|ShiftMask, KEY,      toggletag,      {.ui = 1 << TAG} },
 
+// ;madhu 260904 fix xtile decouple setdirs from TILEKEY macros
+//	{ MOD, XK_r, setdirs,  {.v = (int[])  { INC(G * +1),   INC(M * +1),   INC(S * +1) } } },
+
 #define TILEKEYS(MOD,G,M,S)						\
-	{ MOD, XK_r, setdirs,  {.v = (int[])  { INC(G * +1),   INC(M * +1),   INC(S * +1) } } }, \
 	{ MOD, XK_h, setfacts, {.v = (float[]){ INC(G * -0.1), INC(M * -0.1), INC(S * -0.1) } } }, \
 	{ MOD, XK_l, setfacts, {.v = (float[]){ INC(G * +0.1), INC(M * +0.1), INC(S * +0.1) } } },
 
@@ -120,6 +122,9 @@ static const Key keys[] = {
 	{ MODKEY_ALT,                   XK_l,      toggleopacity,  {0}, },
 	{ MODKEY_ALT,                   XK_j,      toggleopacity,  {.f = +0.1}, },
 	{ MODKEY_ALT,                   XK_k,      toggleopacity,  {.f = -0.1}, },
+
+	// ;madhu 260904 fix xtile decouple setdir from TILEKEYS macros
+	{ MODKEY_ALT|ShiftMask , XK_r, setdirs,  {.v = (int[])  { INC(1 * +1),   INC(0 * +1),   INC(0 * +1) } } },
 
 	//xtile
 	TILEKEYS(MODKEY_ALT,                                       1, 0, 0)
