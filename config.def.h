@@ -128,9 +128,9 @@ static const Key keys[] = {
 	{ MODKEY_ALT|ControlMask|ShiftMask, XK_g,  identify_wintitle,   {0} },
 	{ MODKEY|ShiftMask|ControlMask, XK_s,	   toggle_systray,	{0} }, // madhu 130424
 
-	{ MODKEY,		        XK_p,      spawn,          {.v = dmenucmd } },
+	{ MODKEY|ShiftMask,	        XK_p,      spawn,          {.v = dmenucmd } },
 	{ MODKEY|ShiftMask,             XK_Return, spawn,          {.v = termcmd } },
-	{ MODKEY,			XK_w,	   spawn,	   {.v = roficmd} }, // madhu 230816
+	{ MODKEY|ShiftMask,		XK_w,	   spawn,	   {.v = roficmd} }, // madhu 230816
 	{ MODKEY|ShiftMask,             XK_o,      togglelosefocus, {0} }, //madhu 231016
 	{ MODKEY|ShiftMask|ControlMask, XK_b,      toggle_attach_bottom, {0} }, //;madhu 240201
 #if 0
@@ -199,7 +199,7 @@ static const Key keys[] = {
 	{ MODKEY|ShiftMask,		XK_q,	   startwm,	   {.v = "exec dwm < /dev/null" } }, // madhu 070530
 	{ MODKEY|ShiftMask,             XK_r,	   toggle_resizehints, {0}}, // madhu 080917
 	{ MODKEY|ShiftMask|ControlMask, XK_r,	   toggle_fixed,   {0}}, // madhu 120923
-	{ MODKEY|ShiftMask,             XK_w,      windowlist,     {0} }, // madhu 130402
+	{ Mod4Mask|ControlMask,             XK_w,      windowlist,     {0} }, // madhu 130402
 	{ MODKEY_ALT|ShiftMask|ControlMask, XK_f,  myfocus,        {0} }, // madhu 090403
 	{ MODKEY|ShiftMask|ControlMask, XK_u,      unswallow_now,   {0} }, //;madhu 231223
 	{ MODKEY|ShiftMask,             XK_u,      focusurgent,    {0} }, //madhu 170621
