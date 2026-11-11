@@ -86,6 +86,7 @@ enum { NetSupported, NetWMName, NetWMState, NetWMCheck,
        NetWMFullscreen, NetActiveWindow, NetWMWindowType,
        NetWMWindowTypeDock,
        NetWMWindowOpacity,
+       NetWMWindowTypeNormal, NetWMStateAbove,
        NetWMWindowTypeDesktop,
        NetWMWindowTypeDialog, NetClientList,
        NetWMPid,
@@ -2417,6 +2418,8 @@ setup(void)
 	netatom[NetWMFullscreen] = XInternAtom(dpy, "_NET_WM_STATE_FULLSCREEN", False);
 	netatom[NetWMWindowType] = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE", False);
 	netatom[NetWMWindowTypeDock] = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE_DOCK", False);
+	netatom[NetWMWindowTypeNormal] = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE_NORMAL", False);
+	netatom[NetWMStateAbove] = XInternAtom(dpy, "_NET_WM_STATE_ABOVE", False);
 	netatom[NetWMWindowTypeDialog] = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE_DIALOG", False);
 	netatom[NetWMWindowTypeDesktop] = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE_DESKTOP", False);
 	netatom[NetClientList] = XInternAtom(dpy, "_NET_CLIENT_LIST", False);
@@ -3317,6 +3320,7 @@ updatewindowtype(Client *c)
 		XChangeProperty(dpy, c->win, netatom[NetWMDesktop],
 				XA_CARDINAL, 32, PropModeReplace,
 				(unsigned char *) &x, 1);
+	} else if (wtype == netatom[NetWMWindowTypeNormal]) {
 	}
 }
 
